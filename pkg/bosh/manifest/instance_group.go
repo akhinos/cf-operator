@@ -1,9 +1,12 @@
 package manifest
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+
+	"code.cloudfoundry.org/cf-operator/pkg/kube/util/ctxlog"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -29,6 +32,7 @@ type InstanceGroup struct {
 	LifeCycle          InstanceGroupType      `json:"lifecycle,omitempty"`
 	Properties         map[string]interface{} `json:"properties,omitempty"`
 	Env                AgentEnv               `json:"env,omitempty"`
+	DNS                *DomainNameService     `json:"_quarks_dns,omitempty"`
 }
 
 // NameSanitized returns the sanitized instance group name.
@@ -42,9 +46,24 @@ func (ig *InstanceGroup) ExtendedStatefulsetName(deploymentName string) string {
 	return fmt.Sprintf("%s-%s", deploymentName, ign)
 }
 
+// FindServiceNames find service names in BOSH dns
+func (ig *InstanceGroup) FindServiceNames(ctx context.Context, deploymentName string) []string {
+	var serviceNames []string
+	if ig.DNS != nil {
+		serviceNames = ig.DNS.FindServiceNames(ig.Name, deploymentName)
+		ctxlog.Debug(ctx, "InstanceGroup ", ig.Name, " has the following service names: ", serviceNames)
+	} else {
+		ctxlog.Debug(ctx, "InstanceGroup ", ig.Name, " does not have a bosh-dns. Falling back to default service name")
+	}
+	if len(serviceNames) == 0 {
+		return []string{ig.serviceName(deploymentName, 63)}
+	}
+	return serviceNames
+}
+
 // HeadlessServiceName constructs the headless service name for the instance group.
-func (ig *InstanceGroup) HeadlessServiceName(deploymentName string) string {
-	return ig.serviceName(deploymentName, 63)
+func (ig *InstanceGroup) HeadlessServiceName(ctx context.Context, deploymentName string) string {
+	return ig.FindServiceNames(ctx, deploymentName)[0]
 }
 
 // IndexedServiceName constructs an indexed service name. It's used to construct the other service

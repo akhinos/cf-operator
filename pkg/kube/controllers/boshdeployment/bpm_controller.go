@@ -34,6 +34,7 @@ func AddBPM(ctx context.Context, config *config.Config, mgr manager.Manager) err
 		converter.NewResolver(mgr.GetClient(), func() converter.Interpolator { return converter.NewInterpolator() }),
 		controllerutil.SetControllerReference,
 		converter.NewKubeConverter(
+			ctx,
 			config.Namespace,
 			converter.NewVolumeFactory(),
 			func(manifestName string, instanceGroupName string, version string, disableLogSidecar bool, releaseImageProvider converter.ReleaseImageProvider, bpmConfigs bpm.Configs) converter.ContainerFactory {

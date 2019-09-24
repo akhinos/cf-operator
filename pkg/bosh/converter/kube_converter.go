@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"context"
 	"fmt"
 
 	certv1 "k8s.io/api/certificates/v1beta1"
@@ -16,6 +17,7 @@ import (
 
 // KubeConverter represents a Manifest in kube resources
 type KubeConverter struct {
+	ctx                     context.Context
 	namespace               string
 	volumeFactory           VolumeFactory
 	newContainerFactoryFunc NewContainerFactoryFunc
@@ -37,8 +39,9 @@ type VolumeFactory interface {
 }
 
 // NewKubeConverter converts a Manifest into kube resources
-func NewKubeConverter(namespace string, volumeFactory VolumeFactory, newContainerFactoryFunc NewContainerFactoryFunc) *KubeConverter {
+func NewKubeConverter(ctx context.Context, namespace string, volumeFactory VolumeFactory, newContainerFactoryFunc NewContainerFactoryFunc) *KubeConverter {
 	return &KubeConverter{
+		ctx:                     ctx,
 		namespace:               namespace,
 		volumeFactory:           volumeFactory,
 		newContainerFactoryFunc: newContainerFactoryFunc,

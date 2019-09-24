@@ -4,6 +4,7 @@ package manifest
 
 import (
 	"bytes"
+	"context"
 	"crypto"
 	"crypto/sha1"
 	"encoding/hex"
@@ -18,6 +19,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	esv1 "code.cloudfoundry.org/cf-operator/pkg/kube/apis/extendedsecret/v1alpha1"
+
+	"code.cloudfoundry.org/cf-operator/pkg/kube/util/ctxlog"
 )
 
 const (
@@ -456,12 +459,18 @@ func (m *Manifest) ImplicitVariables() ([]string, error) {
 }
 
 // ApplyAddons goes through all defined addons and adds jobs to matched instance groups
-func (m *Manifest) ApplyAddons() error {
-	for _, addon := range m.AddOns {
-		for _, ig := range m.InstanceGroups {
-			include, err := m.addOnPlacementMatch(ig, addon.Include)
-			if err != nil {
-				return errors.Wrap(err, "failed to process include placement matches")
+func (m *Manifest) ApplyAddons(ctx context.Context, namespace string) error {
+	for _, ig := range m.InstanceGroups {
+
+		var dnsAddon *AddOn
+		for _, addon := range m.AddOns {
+			var err error
+			include := true
+			if addon.Include != nil {
+				include, err = m.addOnPlacementMatch(ig, addon.Include)
+				if err != nil {
+					return errors.Wrap(err, "failed to process include placement matches")
+				}
 			}
 			exclude, err := m.addOnPlacementMatch(ig, addon.Exclude)
 			if err != nil {
@@ -471,7 +480,10 @@ func (m *Manifest) ApplyAddons() error {
 			if exclude || !include {
 				continue
 			}
-
+			if addon.Name == BoshDNSAddOnName {
+				dnsAddon = addon
+				continue // the DNS add-on needs to be applied after all other add-ons have been applied
+			}
 			for _, addonJob := range addon.Jobs {
 				addedJob := Job{
 					Name:       addonJob.Name,
@@ -484,8 +496,26 @@ func (m *Manifest) ApplyAddons() error {
 				ig.Jobs = append(ig.Jobs, addedJob)
 			}
 		}
-	}
 
+		if dnsAddon != nil {
+			ctxlog.Debug(ctx, "Found ", BoshDNSAddOnName, " in InstanceGroup ", ig.Name)
+			if ig.DNS == nil {
+				dns, err := NewDomainNameService(namespace, dnsAddon)
+				if err != nil {
+					return errors.Wrap(err, "failed to create dns")
+				}
+				ig.DNS = dns
+			}
+			for _, job := range ig.Jobs {
+				err := ig.DNS.ReplaceProperties(job.Properties.Properties)
+				if err != nil {
+					return errors.Wrap(err, "failed to replace dns-name in properties of Job "+job.Name+", InstanceGroup "+ig.Name)
+
+				}
+			}
+		}
+
+	}
 	// Remove addons after applying them, so we don't end up applying them again
 	m.AddOns = nil
 

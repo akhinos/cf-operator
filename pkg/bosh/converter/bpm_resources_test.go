@@ -1,6 +1,7 @@
 package converter_test
 
 import (
+	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo"
@@ -35,6 +36,7 @@ var _ = Describe("kube converter", func() {
 	Context("BPMResources", func() {
 		act := func(bpmConfigs bpm.Configs, instanceGroup *manifest.InstanceGroup) (*converter.BPMResources, error) {
 			kubeConverter := converter.NewKubeConverter(
+				context.TODO(),
 				"foo",
 				volumeFactory,
 				func(manifestName string, instanceGroupName string, version string, disableLogSidecar bool, releaseImageProvider converter.ReleaseImageProvider, bpmConfigs bpm.Configs) converter.ContainerFactory {

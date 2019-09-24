@@ -1,8 +1,8 @@
 # Default values for cf-operator.
 image:
   repository: cf-operator
-  org: cfcontainerization
-  tag: foobar
+  org: gcr.io/peripli
+  tag: rhea
   pullPolicy: IfNotPresent
 
 nameOverride: ""

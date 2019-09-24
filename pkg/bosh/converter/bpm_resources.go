@@ -147,7 +147,7 @@ func (kc *KubeConverter) serviceToExtendedSts(
 							SecurityContext: &corev1.PodSecurityContext{
 								FSGroup: &admGroupID,
 							},
-							Subdomain: instanceGroup.HeadlessServiceName(manifestName),
+							Subdomain: instanceGroup.HeadlessServiceName(kc.ctx, manifestName),
 						},
 					},
 				},
@@ -231,26 +231,29 @@ func (kc *KubeConverter) serviceToKubeServices(manifestName string, instanceGrou
 		}
 	}
 
-	headlessService := corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        instanceGroup.HeadlessServiceName(manifestName),
-			Namespace:   kc.namespace,
-			Labels:      instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels,
-			Annotations: instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Annotations,
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: ports,
-			Selector: map[string]string{
-				bdm.LabelInstanceGroupName: instanceGroup.Name,
+	for i, headlessServiceName := range instanceGroup.FindServiceNames(kc.ctx, manifestName) {
+		headlessService := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        headlessServiceName,
+				Namespace:   kc.namespace,
+				Labels:      instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels,
+				Annotations: instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Annotations,
 			},
-			ClusterIP: "None",
-		},
+			Spec: corev1.ServiceSpec{
+				Ports: ports,
+				Selector: map[string]string{
+					bdm.LabelInstanceGroupName: instanceGroup.Name,
+				},
+				ClusterIP: "None",
+			},
+		}
+
+		services = append(services, headlessService)
+		if i == 0 {
+			// Set headlessService to govern StatefulSet.
+			eSts.Spec.Template.Spec.ServiceName = headlessServiceName
+		}
 	}
-
-	services = append(services, headlessService)
-
-	// Set headlessService to govern StatefulSet.
-	eSts.Spec.Template.Spec.ServiceName = headlessService.ObjectMeta.Name
 
 	return services
 }

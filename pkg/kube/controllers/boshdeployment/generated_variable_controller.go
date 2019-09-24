@@ -1,10 +1,11 @@
 package boshdeployment
 
 import (
-	"code.cloudfoundry.org/cf-operator/pkg/bosh/bpm"
 	"context"
 	"fmt"
 	"strings"
+
+	"code.cloudfoundry.org/cf-operator/pkg/bosh/bpm"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +32,7 @@ func AddGeneratedVariable(ctx context.Context, config *config.Config, mgr manage
 		ctx, config, mgr,
 		controllerutil.SetControllerReference,
 		converter.NewKubeConverter(
+			ctx,
 			config.Namespace,
 			converter.NewVolumeFactory(),
 			func(manifestName string, instanceGroupName string, version string, disableLogSidecar bool, releaseImageProvider converter.ReleaseImageProvider, bpmConfigs bpm.Configs) converter.ContainerFactory {

@@ -1,6 +1,7 @@
 package manifest_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -75,7 +76,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 			})
 
 			It("returns the bpm config for all jobs", func() {
-				bpmConfigs, err := dg.BPMConfigs()
+				bpmConfigs, err := dg.BPMConfigs(context.TODO())
 				Expect(err).ToNot(HaveOccurred())
 
 				bpm := bpmConfigs["loggregator_trafficcontroller"]
@@ -98,7 +99,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("returns overwritten bpm config", func() {
-					bpmConfigs, err := dg.BPMConfigs()
+					bpmConfigs, err := dg.BPMConfigs(context.TODO())
 					Expect(err).ToNot(HaveOccurred())
 
 					bpm := bpmConfigs["redis-server"]
@@ -115,7 +116,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("returns merged bpm config", func() {
-					bpmConfigs, err := dg.BPMConfigs()
+					bpmConfigs, err := dg.BPMConfigs(context.TODO())
 					Expect(err).ToNot(HaveOccurred())
 
 					bpm := bpmConfigs["redis-server"]
@@ -135,7 +136,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 			})
 
 			It("should gather all data for each job spec file", func() {
-				manifest, err := dg.Manifest()
+				manifest, err := dg.Manifest(context.TODO())
 				Expect(err).ToNot(HaveOccurred())
 
 				//Check JobInstance for the redis-server job
@@ -158,7 +159,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("resolves all required data if the job consumes a link", func() {
-					manifest, err := dg.Manifest()
+					manifest, err := dg.Manifest(context.TODO())
 					Expect(err).ToNot(HaveOccurred())
 
 					// log-api instance_group, with loggregator_trafficcontroller job, consumes a link from doppler job
@@ -180,7 +181,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("has an empty consumes list if the job does not consume a link", func() {
-					manifest, err := dg.Manifest()
+					manifest, err := dg.Manifest(context.TODO())
 					Expect(err).ToNot(HaveOccurred())
 
 					// doppler instance_group, with doppler job, only provides doppler link

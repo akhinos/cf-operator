@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -81,7 +82,7 @@ This will resolve the properties of an instance group and return a manifest for 
 			return errors.Wrapf(err, dGatherFailedMessage)
 		}
 
-		manifest, err := dg.Manifest()
+		manifest, err := dg.Manifest(context.TODO())
 		if err != nil {
 			return errors.Wrapf(err, dGatherFailedMessage)
 		}

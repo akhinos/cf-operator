@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -47,10 +48,10 @@ func NewInstanceGroupResolver(basedir, namespace string, manifest Manifest, inst
 // BPMConfigs returns a map of all BOSH jobs in the instance group
 // The output will be persisted by ExtendedJob as 'bpm.yaml' in the
 // `<deployment-name>.bpm.<instance-group>-v<version>` secret.
-func (dg *InstanceGroupResolver) BPMConfigs() (bpm.Configs, error) {
+func (dg *InstanceGroupResolver) BPMConfigs(ctx context.Context) (bpm.Configs, error) {
 	bpm := bpm.Configs{}
 
-	err := dg.resolveManifest()
+	err := dg.resolveManifest(ctx)
 	if err != nil {
 		return bpm, err
 	}
@@ -66,8 +67,8 @@ func (dg *InstanceGroupResolver) BPMConfigs() (bpm.Configs, error) {
 // That manifest includes the gathered data from BPM and links.
 // The output will be persisted by ExtendedJob as 'properties.yaml' in the
 // `<deployment-name>.ig-resolved.<instance-group>-v<version>` secret.
-func (dg *InstanceGroupResolver) Manifest() (Manifest, error) {
-	err := dg.resolveManifest()
+func (dg *InstanceGroupResolver) Manifest(ctx context.Context) (Manifest, error) {
+	err := dg.resolveManifest(ctx)
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -82,12 +83,12 @@ func (dg *InstanceGroupResolver) Manifest() (Manifest, error) {
 // * job properties
 // * bosh links
 // * bpm yaml file data
-func (dg *InstanceGroupResolver) resolveManifest() error {
+func (dg *InstanceGroupResolver) resolveManifest(ctx context.Context) error {
 	if err := runPreRenderScripts(dg.instanceGroup); err != nil {
 		return err
 	}
 
-	if err := dg.collectReleaseSpecsAndProviderLinks(); err != nil {
+	if err := dg.collectReleaseSpecsAndProviderLinks(ctx); err != nil {
 		return err
 	}
 
@@ -103,9 +104,9 @@ func (dg *InstanceGroupResolver) resolveManifest() error {
 }
 
 // collectReleaseSpecsAndProviderLinks will collect all release specs and generate bosh links for provider jobs
-func (dg *InstanceGroupResolver) collectReleaseSpecsAndProviderLinks() error {
+func (dg *InstanceGroupResolver) collectReleaseSpecsAndProviderLinks(ctx context.Context) error {
 	for _, instanceGroup := range dg.manifest.InstanceGroups {
-		serviceName := instanceGroup.HeadlessServiceName(dg.manifest.Name)
+		serviceName := instanceGroup.HeadlessServiceName(ctx, dg.manifest.Name)
 
 		for jobIdx, job := range instanceGroup.Jobs {
 			// make sure a map entry exists for the current job release

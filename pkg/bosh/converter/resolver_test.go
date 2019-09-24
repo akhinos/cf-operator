@@ -129,6 +129,42 @@ variables:
 			},
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:      "manifest-with-dns",
+					Namespace: "default",
+				},
+				Data: map[string]string{bdc.ManifestSpecName: `---
+name: foo
+addons:
+- name: bosh-dns-aliases
+  jobs:
+  - name: bosh-dns-aliases
+    release: bosh-dns-aliases
+    properties:
+      aliases:
+      - domain: 'uaa.service.cf.internal'
+        targets:
+        - query: '_'
+          instance_group: uaa
+          deployment: cf
+          network: default
+          domain: bosh
+instance_groups:
+  - name: component1
+    instances: 1
+    jobs:
+    - name: job1
+      properties:
+        url: https://uaa.service.cf.internal:8443/test/
+variables:
+  - name: router_ca
+    type: certificate
+    options:
+      is_ca: true
+      common_name: ((system_domain))
+`},
+			},
+			&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "manifest-with-multiline-implicit-var",
 					Namespace: "default",
 				},
@@ -703,6 +739,29 @@ instance_groups:
 			Expect(m.Variables[1].Options.CommonName).To(Equal("example.com"))
 			Expect(len(implicitVars)).To(Equal(1))
 			Expect(implicitVars[0]).To(Equal("foo-deployment.var-system-domain"))
+		})
+
+		It("replaces dns names", func() {
+			deployment := &bdc.BOSHDeployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo-deployment",
+				},
+				Spec: bdc.BOSHDeploymentSpec{
+					Manifest: bdc.ResourceReference{
+						Type: bdc.ConfigMapReference,
+						Name: "manifest-with-dns",
+					},
+					Ops: []bdc.ResourceReference{},
+				},
+			}
+			m, _, err := resolver.WithOpsManifest(context.Background(), deployment, "default")
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(m.InstanceGroups).To(HaveLen(1))
+			Expect(m.InstanceGroups[0].Jobs).To(HaveLen(1))
+			value, ok := m.InstanceGroups[0].Jobs[0].Property("url")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal("https://uaa.default.svc.cluster.local:8443/test/"))
 		})
 
 		It("handles multi-line implicit vars", func() {

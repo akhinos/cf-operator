@@ -1,10 +1,11 @@
 package converter_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
-
 
 	"code.cloudfoundry.org/cf-operator/pkg/bosh/bpm"
 	"code.cloudfoundry.org/cf-operator/pkg/bosh/converter"
@@ -32,6 +33,7 @@ var _ = Describe("kube converter", func() {
 
 		act := func() ([]esv1.ExtendedSecret, error) {
 			kubeConverter := converter.NewKubeConverter(
+				context.TODO(),
 				"foo",
 				volumeFactory,
 				func(manifestName string, instanceGroupName string, version string, disableLogSidecar bool, releaseImageProvider converter.ReleaseImageProvider, bpmConfigs bpm.Configs) converter.ContainerFactory {

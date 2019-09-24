@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -82,7 +83,7 @@ instance group.
 			return errors.Wrapf(err, bpmFailedMessage)
 		}
 
-		bpmConfigs, err := dg.BPMConfigs()
+		bpmConfigs, err := dg.BPMConfigs(context.TODO())
 		if err != nil {
 			return errors.Wrapf(err, bpmFailedMessage)
 		}
