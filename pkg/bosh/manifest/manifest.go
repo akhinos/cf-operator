@@ -500,6 +500,7 @@ func (m *Manifest) ApplyAddons(ctx context.Context, namespace string) error {
 		if dnsAddon != nil {
 			ctxlog.Debug(ctx, "Found ", BoshDNSAddOnName, " in InstanceGroup ", ig.Name)
 			if ig.DNS == nil {
+				//TODO onlt write DNS entries for that instance group
 				dns, err := NewDomainNameService(namespace, dnsAddon)
 				if err != nil {
 					return errors.Wrap(err, "failed to create dns")
@@ -516,8 +517,46 @@ func (m *Manifest) ApplyAddons(ctx context.Context, namespace string) error {
 		}
 
 	}
+	addSANBasedOnDNSToVariables(namespace, m.Variables, m.getBoshDNSAddon())
 	// Remove addons after applying them, so we don't end up applying them again
 	m.AddOns = nil
 
 	return nil
+}
+
+func addSANBasedOnDNSToVariables(namespace string, variables []Variable, boshDNSAddon *AddOn) error {
+	if boshDNSAddon == nil {
+		return nil
+	}
+
+	dns, err := NewDomainNameService(namespace, boshDNSAddon)
+	if err != nil {
+		return errors.Wrap(err, "failed to create DNS from BoshDNSAddon")
+	}
+	for _, v := range variables {
+		if v.Type == esv1.Certificate {
+			addSANToCertVariable(namespace, &v, *dns)
+		}
+	}
+	return nil
+}
+
+func addSANToCertVariable(namespace string, variable *Variable, dns DomainNameService) {
+	//SubjectAlternativeNames
+	SANs := dns.getDNSAliases(variable.Options.CommonName)
+
+	for _, altName := range variable.Options.AlternativeNames {
+		SANs = append(SANs, dns.getDNSAliases(altName)...)
+	}
+
+	variable.Options.AlternativeNames = append(variable.Options.AlternativeNames, SANs...)
+}
+
+func (m *Manifest) getBoshDNSAddon() *AddOn {
+	for _, addon := range m.AddOns {
+		if addon.Name == BoshDNSAddOnName {
+			return addon
+		}
+	}
+	return nil //TODO return nil or Null Object?
 }

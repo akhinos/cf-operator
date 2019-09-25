@@ -160,7 +160,7 @@ variables:
     type: certificate
     options:
       is_ca: true
-      common_name: ((system_domain))
+      common_name: uaa.service.cf.internal
 `},
 			},
 			&corev1.ConfigMap{
@@ -762,6 +762,26 @@ instance_groups:
 			value, ok := m.InstanceGroups[0].Jobs[0].Property("url")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal("https://uaa.default.svc.cluster.local:8443/test/"))
+		})
+
+		It("add SAN to certificates based on bosh DNS", func() {
+			deployment := &bdc.BOSHDeployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo-deployment",
+				},
+				Spec: bdc.BOSHDeploymentSpec{
+					Manifest: bdc.ResourceReference{
+						Type: bdc.ConfigMapReference,
+						Name: "manifest-with-dns",
+					},
+					Ops: []bdc.ResourceReference{},
+				},
+			}
+			m, _, err := resolver.WithOpsManifest(context.Background(), deployment, "default")
+
+			Expect(err).ToNot(HaveOccurred())
+			SANs := m.Variables[0].Options.AlternativeNames
+			Expect(SANs).To(ConsistOf("uaa.default.svc.cluster.local"))
 		})
 
 		It("handles multi-line implicit vars", func() {

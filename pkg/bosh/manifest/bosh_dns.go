@@ -32,7 +32,8 @@ type DomainNameService struct {
 // BoshDNSAddOnName name of bosh dns add on
 const BoshDNSAddOnName = "bosh-dns-aliases"
 
-var domainRegexp = regexp.MustCompile("\\.service\\.cf\\.internal")
+//TODO REALLY needed?
+var domainRegexp = regexp.MustCompile(`\.service\.cf\.internal`)
 
 // NewDomainNameService create a new DomainNameService
 func NewDomainNameService(namespace string, addOn *AddOn) (*DomainNameService, error) {
@@ -85,18 +86,26 @@ func (dns *DomainNameService) ReplaceProperties(properties map[string]interface{
 }
 
 // FindServiceNames determines how a service should be named in accordance with the 'bosh-dns'-addon
-func (dns *DomainNameService) FindServiceNames(instanceGroupName string, deploymentName string) []string {
+func (dns *DomainNameService) FindServiceNames(instanceGroupName string, _ string) []string {
 	result := make([]string, 0)
 	for _, alias := range dns.Aliases {
 		for _, target := range alias.Targets {
-			if target.InstanceGroup == instanceGroupName /* && target.Deployment == deploymentName */ {
-				parts := strings.Split(alias.Domain, ".")
-				if len(parts) == 0 {
-					panic("Should never happen")
-				}
+			if target.InstanceGroup == instanceGroupName {
 				result = append(result, strings.Split(alias.Domain, ".")[0])
 			}
 		}
 	}
 	return result
+}
+
+func (dns *DomainNameService) getDNSAliases(domain string) []string {
+	DNSAliases := make([]string, 0)
+	for _, alias := range dns.Aliases {
+		if alias.Domain == domain {
+			//TODO unify and use only once
+			kubeBaseDomain := "." + dns.Namespace + ".svc.cluster.local"
+			DNSAliases = append(DNSAliases, strings.Split(domain, ".")[0]+kubeBaseDomain)
+		}
+	}
+	return DNSAliases
 }
