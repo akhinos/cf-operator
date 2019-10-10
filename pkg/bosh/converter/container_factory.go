@@ -138,40 +138,32 @@ func (c *ContainerFactoryImpl) JobsToInitContainers(
 		c.version,
 	)
 
-	waitContainer := createWaitContainer(c.instanceGroupName, resolvedPropertiesSecretName)
+	waitContainer := createWaitContainer(c.instanceGroupName)
 
 	initContainers := flattenContainers(
 		containerRunCopier(),
 		copyingSpecsInitContainers,
 		templateRenderingContainer(c.instanceGroupName, resolvedPropertiesSecretName),
 		createDirContainer(jobs),
+		waitContainer,
 		boshPreStartInitContainers,
 		bpmPreStartInitContainers,
-		waitContainer,
 	)
 
 	return initContainers, nil
 }
 
-func createWaitContainer(instanceGroupName string, secretName string) corev1.Container {
+func createWaitContainer(instanceGroupName string) corev1.Container {
 	waitCmd := waitCmd(instanceGroupName)
-	container := createDirContainer([]bdm.Job{}) //corev1.Container{}//templateRenderingContainer(instanceGroupName, secretName) //use valid container as template
+	container := createDirContainer([]bdm.Job{})
 	container.Image = "busybox"
 	container.ImagePullPolicy = "IfNotPresent"
 	container.Name = "wait-for"
-	//container.Command = []string{"/bin/sh"}
+	container.Command = []string{"/bin/sh"}
 	container.Args = []string{
-		"/bin/sh",
 		"-xc",
 		waitCmd,
 	}
-
-	//var x int64
-	//x = 0
-	//container.SecurityContext = &corev1.SecurityContext{RunAsUser: &x}
-	//container.TerminationMessagePath = "/dev/termination-log"
-	//container.TerminationMessagePolicy = "File"
-	//container.VolumeMounts = []corev1.VolumeMount{{MountPath: "/var/run/secrets/kubernetes.io/serviceaccount", Name: "default-token-zbbhx", ReadOnly: true}}
 
 	return container
 }
@@ -192,6 +184,7 @@ func waitCmd(instanceGroupName string) string {
 }
 
 func findDependency(instanceGroupName string) interface{} {
+	//TODO get correct dependencies
 	dependencies := []string{"nats", "adapter", "database", "diego-api", "uaa", "singleton-blobstore", "api", "cc-worker", "scheduler", "router", "doppler", "log-api"}
 	for index, name := range dependencies {
 		if name == instanceGroupName {
@@ -201,7 +194,6 @@ func findDependency(instanceGroupName string) interface{} {
 
 			return dependencies[index-1]
 		}
-
 	}
 
 	return ""
