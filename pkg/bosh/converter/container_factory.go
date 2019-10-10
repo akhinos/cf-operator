@@ -183,19 +183,31 @@ func waitCmd(instanceGroupName string) string {
 	return waitCmd
 }
 
-func findDependency(instanceGroupName string) interface{} {
-	//TODO get correct dependencies
-	dependencies := []string{"nats", "adapter", "database", "diego-api", "uaa", "singleton-blobstore", "api", "cc-worker", "scheduler", "router", "doppler", "log-api"}
-	for index, name := range dependencies {
-		if name == instanceGroupName {
-			if index == 0 {
-				return ""
-			}
-
-			return dependencies[index-1]
-		}
+func findDependency(instanceGroupName string) string {
+	switch instanceGroupName {
+	case "adapter":
+		return "nats"
+	case "database":
+		return "adapter"
+	case "diego-api":
+		return "database"
+	case "uaa":
+		return "diego-api"
+	case "singleton-blobstore":
+		return "uaa"
+	case "api":
+		return "singleton-blobstore"
+	case "cc-worker":
+		return "api"
+	case "scheduler":
+		return "api"
+	case "router":
+		return "api"
+	case "doppler":
+		return "router"
+	case "log-api":
+		return "doppler"
 	}
-
 	return ""
 }
 
@@ -295,9 +307,10 @@ func (c *ContainerFactoryImpl) JobsToContainers(
 // logsTailerContainer is a container that tails all logs in /var/vcap/sys/log.
 func logsTailerContainer(instanceGroupName string) corev1.Container {
 	return corev1.Container{
-		Name:         "logs",
-		Image:        GetOperatorDockerImage(),
-		VolumeMounts: []corev1.VolumeMount{*sysDirVolumeMount()},
+		Name:            "logs",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
+		VolumeMounts:    []corev1.VolumeMount{*sysDirVolumeMount()},
 		Args: []string{
 			"util",
 			"tail-logs",
@@ -317,8 +330,9 @@ func logsTailerContainer(instanceGroupName string) corev1.Container {
 func containerRunCopier() corev1.Container {
 	dstDir := fmt.Sprintf("%s/container-run", VolumeRenderingDataMountPath)
 	return corev1.Container{
-		Name:  "container-run-copier",
-		Image: GetOperatorDockerImage(),
+		Name:            "container-run-copier",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      VolumeRenderingDataName,
@@ -361,8 +375,9 @@ func jobSpecCopierContainer(releaseName string, jobImage string, volumeMountName
 
 func templateRenderingContainer(instanceGroupName string, secretName string) corev1.Container {
 	return corev1.Container{
-		Name:  "template-render",
-		Image: GetOperatorDockerImage(),
+		Name:            "template-render",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
 		VolumeMounts: []corev1.VolumeMount{
 			*renderingVolumeMount(),
 			*jobsDirVolumeMount(),
@@ -415,10 +430,11 @@ func createDirContainer(jobs []bdm.Job) corev1.Container {
 	}
 
 	return corev1.Container{
-		Name:         "create-dirs",
-		Image:        GetOperatorDockerImage(),
-		VolumeMounts: []corev1.VolumeMount{*dataDirVolumeMount(), *sysDirVolumeMount()},
-		Command:      []string{"/usr/bin/dumb-init", "--"},
+		Name:            "create-dirs",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
+		VolumeMounts:    []corev1.VolumeMount{*dataDirVolumeMount(), *sysDirVolumeMount()},
+		Command:         []string{"/usr/bin/dumb-init", "--"},
 		Args: []string{
 			"/bin/sh",
 			"-xc",
