@@ -240,9 +240,10 @@ func (c *ContainerFactory) JobsToContainers(
 // logsTailerContainer is a container that tails all logs in /var/vcap/sys/log.
 func logsTailerContainer(instanceGroupName string) corev1.Container {
 	return corev1.Container{
-		Name:         "logs",
-		Image:        GetOperatorDockerImage(),
-		VolumeMounts: []corev1.VolumeMount{*sysDirVolumeMount()},
+		Name:            "logs",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
+		VolumeMounts:    []corev1.VolumeMount{*sysDirVolumeMount()},
 		Args: []string{
 			"util",
 			"tail-logs",
@@ -262,8 +263,9 @@ func logsTailerContainer(instanceGroupName string) corev1.Container {
 func containerRunCopier() corev1.Container {
 	dstDir := fmt.Sprintf("%s/container-run", VolumeRenderingDataMountPath)
 	return corev1.Container{
-		Name:  "container-run-copier",
-		Image: GetOperatorDockerImage(),
+		Name:            "container-run-copier",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      VolumeRenderingDataName,
@@ -306,8 +308,9 @@ func jobSpecCopierContainer(releaseName string, jobImage string, volumeMountName
 
 func templateRenderingContainer(instanceGroupName string, secretName string) corev1.Container {
 	return corev1.Container{
-		Name:  "template-render",
-		Image: GetOperatorDockerImage(),
+		Name:            "template-render",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
 		VolumeMounts: []corev1.VolumeMount{
 			*renderingVolumeMount(),
 			*jobsDirVolumeMount(),
@@ -360,10 +363,11 @@ func createDirContainer(jobs []bdm.Job) corev1.Container {
 	}
 
 	return corev1.Container{
-		Name:         "create-dirs",
-		Image:        GetOperatorDockerImage(),
-		VolumeMounts: []corev1.VolumeMount{*dataDirVolumeMount(), *sysDirVolumeMount()},
-		Command:      []string{"/usr/bin/dumb-init", "--"},
+		Name:            "create-dirs",
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
+		VolumeMounts:    []corev1.VolumeMount{*dataDirVolumeMount(), *sysDirVolumeMount()},
+		Command:         []string{"/usr/bin/dumb-init", "--"},
 		Args: []string{
 			"/bin/sh",
 			"-xc",

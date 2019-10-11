@@ -125,10 +125,11 @@ func (f *JobFactory) VariableInterpolationJob() (*ejv1.ExtendedJob, error) {
 					RestartPolicy: corev1.RestartPolicyOnFailure,
 					Containers: []corev1.Container{
 						{
-							Name:         VarInterpolationContainerName,
-							Image:        GetOperatorDockerImage(),
-							Args:         args,
-							VolumeMounts: volumeMounts,
+							Name:            VarInterpolationContainerName,
+							Image:           GetOperatorDockerImage(),
+							ImagePullPolicy: corev1.PullAlways,
+							Args:            args,
+							VolumeMounts:    volumeMounts,
 							Env: []corev1.EnvVar{
 								{
 									Name:  EnvBOSHManifestPath,
@@ -179,9 +180,10 @@ func (f *JobFactory) BPMConfigsJob() (*ejv1.ExtendedJob, error) {
 
 func (f *JobFactory) gatheringContainer(cmd, instanceGroupName string) corev1.Container {
 	return corev1.Container{
-		Name:  names.Sanitize(instanceGroupName),
-		Image: GetOperatorDockerImage(),
-		Args:  []string{"util", cmd},
+		Name:            names.Sanitize(instanceGroupName),
+		Image:           GetOperatorDockerImage(),
+		ImagePullPolicy: corev1.PullAlways,
+		Args:            []string{"util", cmd},
 		VolumeMounts: []corev1.VolumeMount{
 			withOpsVolumeMount(f.desiredManifestName),
 			releaseSourceVolumeMount(),
