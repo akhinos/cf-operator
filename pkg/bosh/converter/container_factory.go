@@ -56,6 +56,7 @@ func (c *ContainerFactoryImpl) JobsToInitContainers(
 	jobs []bdm.Job,
 	defaultVolumeMounts []corev1.VolumeMount,
 	bpmDisks disk.BPMResourceDisks,
+	requiredService *string,
 ) ([]corev1.Container, error) {
 	copyingSpecsInitContainers := make([]corev1.Container, 0)
 	boshPreStartInitContainers := make([]corev1.Container, 0)
@@ -138,14 +139,12 @@ func (c *ContainerFactoryImpl) JobsToInitContainers(
 		c.version,
 	)
 
-	waitContainer := createWaitContainer(c.instanceGroupName)
-
 	initContainers := flattenContainers(
 		containerRunCopier(),
 		copyingSpecsInitContainers,
 		templateRenderingContainer(c.instanceGroupName, resolvedPropertiesSecretName),
 		createDirContainer(jobs),
-		waitContainer,
+		createWaitContainer(requiredService),
 		boshPreStartInitContainers,
 		bpmPreStartInitContainers,
 	)
@@ -153,8 +152,10 @@ func (c *ContainerFactoryImpl) JobsToInitContainers(
 	return initContainers, nil
 }
 
-func createWaitContainer(instanceGroupName string) corev1.Container {
-	waitCmd := waitCmd(instanceGroupName)
+func createWaitContainer(requiredService *string) []corev1.Container {
+	if requiredService == nil {
+		return nil
+	}
 	container := createDirContainer([]bdm.Job{})
 	container.Image = "busybox"
 	container.ImagePullPolicy = "IfNotPresent"
@@ -162,24 +163,15 @@ func createWaitContainer(instanceGroupName string) corev1.Container {
 	container.Command = []string{"/bin/sh"}
 	container.Args = []string{
 		"-xc",
-		waitCmd,
+		waitCmd(*requiredService),
 	}
 
-	return container
+	return []corev1.Container{container}
 }
 
-func waitCmd(instanceGroupName string) string {
+func waitCmd(requiredService string) string {
 
-	waitFor := findDependency(instanceGroupName)
-
-	if waitFor == "" {
-		return `echo "no dependency"`
-	}
-	waitCmd := fmt.Sprintf(`while ! nslookup scf-%s ; do
-	    echo "waiting for scf-%s"
-		sleep 15;
-		done
-		`, waitFor, waitFor)
+	waitCmd := fmt.Sprintf(`while ! nslookup %s ; do echo "waiting for %s";sleep 15;done`, requiredService, requiredService)
 	return waitCmd
 }
 

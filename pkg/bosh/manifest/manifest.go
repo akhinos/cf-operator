@@ -168,7 +168,6 @@ func LoadYAML(data []byte) (*Manifest, error) {
 	}
 
 	m.loadDNS()
-
 	return m, nil
 }
 
@@ -187,6 +186,31 @@ func (m *Manifest) loadDNS() {
 		}
 	}
 	m.DNS = NewSimpleDomainNameService(m.Name)
+}
+
+// CalculateRequiredServices calculates the required services using the update.serial property
+func (m *Manifest) CalculateRequiredServices() {
+
+	var predecessor *string = nil
+
+	for _, ig := range m.InstanceGroups {
+		serial := true
+		if m.Update != nil && m.Update.Serial != nil {
+			serial = *m.Update.Serial
+		}
+		if ig.Update != nil && ig.Update.Serial != nil {
+			serial = *m.Update.Serial
+		}
+		if serial {
+			ig.Properties.Quarks.RequiredService = predecessor
+		}
+		ports := ig.ServicePorts()
+		if len(ports) > 0 {
+			serviceName := m.DNS.HeadlessServiceName(ig.Name)
+			predecessor = &serviceName
+		}
+	}
+
 }
 
 // Marshal serializes a BOSH manifest into yaml

@@ -1068,8 +1068,8 @@ var _ = Describe("Manifest", func() {
 				ig := manifest.InstanceGroups[0]
 				Expect(ig.Name).To(Equal("redis-slave"))
 				Expect(ig.Instances).To(Equal(2))
-				Expect(ig.Properties).To(HaveLen(1))
-				Expect(ig.Properties["foo"]).To(Equal(map[string]interface{}{"app_domain": "((app_domain))"}))
+				Expect(ig.Properties.Properties).To(HaveLen(1))
+				Expect(ig.Properties.Properties["foo"]).To(Equal(map[string]interface{}{"app_domain": "((app_domain))"}))
 
 				settings := ig.Env.AgentEnvBoshConfig.Agent.Settings
 				Expect(settings.Labels).To(Equal(map[string]string{"custom-label": "foo"}))

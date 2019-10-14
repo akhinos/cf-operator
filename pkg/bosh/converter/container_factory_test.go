@@ -505,7 +505,7 @@ var _ = Describe("ContainerFactory", func() {
 
 	Context("JobsToInitContainers", func() {
 		act := func() ([]corev1.Container, error) {
-			return containerFactory.JobsToInitContainers(jobs, defaultVolumeMounts, bpmDisks)
+			return containerFactory.JobsToInitContainers(jobs, defaultVolumeMounts, bpmDisks, nil)
 		}
 
 		Context("when multiple jobs are configured", func() {
@@ -514,6 +514,15 @@ var _ = Describe("ContainerFactory", func() {
 					"fake-job":  bpm.Config{},
 					"other-job": bpm.Config{},
 				}
+			})
+
+			FIt("respects required services", func() {
+				requiredService := "required-service"
+				containers, err := containerFactory.JobsToInitContainers(jobs, defaultVolumeMounts, bpmDisks, &requiredService)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(containers).To(HaveLen(7))
+				Expect(containers[4].Name).To(Equal("wait-for"))
+				Expect(containers[4].Args).To(ContainElement(`while ! nslookup required-service ; do echo "waiting for required-service";sleep 15;done`))
 			})
 
 			It("generates per job directories", func() {
