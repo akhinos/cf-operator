@@ -106,8 +106,9 @@ func (r *ResolverImpl) WithOpsManifest(ctx context.Context, instance *bdv1.BOSHD
 		}
 	}
 
+	instanceName := instance.GetName()
 	// Reload the manifest after interpolation, and apply implicit variables
-	manifest, err := bdm.LoadYAML(bytes)
+	manifest, err := bdm.LoadYAMLWithName(bytes, &instanceName)
 	if err != nil {
 		return nil, []string{}, errors.Wrapf(err, "Loading yaml failed in interpolation task after applying ops %#v", m)
 	}
@@ -183,8 +184,9 @@ func (r *ResolverImpl) WithOpsManifestDetailed(ctx context.Context, instance *bd
 		log.Debugf(ctx, "Applied ops file '%s' for deployment '%s'", op.Name, instance.Name)
 	}
 
+	instanceName := instance.GetName()
 	// Reload the manifest after interpolation, and apply implicit variables
-	manifest, err := bdm.LoadYAML(bytes)
+	manifest, err := bdm.LoadYAMLWithName(bytes, &instanceName)
 	if err != nil {
 		return nil, []string{}, errors.Wrapf(err, "Loading yaml failed in interpolation task after applying ops %#v", m)
 	}

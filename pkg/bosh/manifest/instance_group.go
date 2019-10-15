@@ -33,13 +33,13 @@ type InstanceGroup struct {
 
 // InstanceGroupQuarks represents the quark property of a InstanceGroup
 type InstanceGroupQuarks struct {
-	RequiredService *string `json:"predecessor,omitempty"`
+	RequiredService *string `json:"required_service,omitempty"`
 }
 
 // InstanceGroupProperties represents the properties map of a InstanceGroup
 type InstanceGroupProperties struct {
-	Properties map[string]interface{} `json:"-"`
-	Quarks     InstanceGroupQuarks    `json:"-"`
+	Properties map[string]interface{}
+	Quarks     InstanceGroupQuarks
 }
 
 func copy(source map[string]interface{}) map[string]interface{} {
@@ -167,7 +167,7 @@ type Update struct {
 	MaxInFlight     string  `json:"max_in_flight"`
 	CanaryWatchTime string  `json:"canary_watch_time"`
 	UpdateWatchTime string  `json:"update_watch_time"`
-	Serial          *bool   `json:"serial,omitempty"` // must be pointer, because default is true
+	Serial          *bool   `json:"serial,omitempty"` // must be pointer, because otherwise default is false
 	VMStrategy      *string `json:"vm_strategy,omitempty"`
 }
 

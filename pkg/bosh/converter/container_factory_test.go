@@ -516,7 +516,7 @@ var _ = Describe("ContainerFactory", func() {
 				}
 			})
 
-			FIt("respects required services", func() {
+			It("respects required services", func() {
 				requiredService := "required-service"
 				containers, err := containerFactory.JobsToInitContainers(jobs, defaultVolumeMounts, bpmDisks, &requiredService)
 				Expect(err).ToNot(HaveOccurred())

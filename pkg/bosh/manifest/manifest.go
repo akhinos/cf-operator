@@ -158,6 +158,10 @@ type duplicateYamlValue struct {
 
 // LoadYAML returns a new BOSH deployment manifest from a yaml representation
 func LoadYAML(data []byte) (*Manifest, error) {
+	return LoadYAMLWithName(data, nil)
+}
+
+func LoadYAMLWithName(data []byte, name *string) (*Manifest, error) {
 	m := &Manifest{}
 	err := yaml.Unmarshal(data, m, func(opt *json.Decoder) *json.Decoder {
 		opt.UseNumber()
@@ -166,8 +170,12 @@ func LoadYAML(data []byte) (*Manifest, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal BOSH deployment manifest %s", string(data))
 	}
+	if name != nil {
+		m.Name = *name
+	}
 
 	m.loadDNS()
+
 	return m, nil
 }
 
@@ -190,8 +198,8 @@ func (m *Manifest) loadDNS() {
 
 // CalculateRequiredServices calculates the required services using the update.serial property
 func (m *Manifest) CalculateRequiredServices() {
-
-	var predecessor *string = nil
+	var requiredService *string = nil
+	var requiredSerialService *string = nil
 
 	for _, ig := range m.InstanceGroups {
 		serial := true
@@ -199,18 +207,29 @@ func (m *Manifest) CalculateRequiredServices() {
 			serial = *m.Update.Serial
 		}
 		if ig.Update != nil && ig.Update.Serial != nil {
-			serial = *m.Update.Serial
+			serial = *ig.Update.Serial
 		}
+
+		if strings.Contains(ig.Name, "eirini") { //FIXME hack
+			continue
+		}
+
 		if serial {
-			ig.Properties.Quarks.RequiredService = predecessor
+			ig.Properties.Quarks.RequiredService = requiredService
+		} else {
+			ig.Properties.Quarks.RequiredService = requiredSerialService
 		}
+
 		ports := ig.ServicePorts()
 		if len(ports) > 0 {
 			serviceName := m.DNS.HeadlessServiceName(ig.Name)
-			predecessor = &serviceName
+			requiredService = &serviceName
+		}
+
+		if serial {
+			requiredSerialService = requiredService
 		}
 	}
-
 }
 
 // Marshal serializes a BOSH manifest into yaml
