@@ -522,7 +522,7 @@ var _ = Describe("ContainerFactory", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(containers).To(HaveLen(7))
 				Expect(containers[4].Name).To(Equal("wait-for"))
-				Expect(containers[4].Args).To(ContainElement(`while ! nslookup required-service ; do echo "waiting for required-service";sleep 15;done`))
+				Expect(containers[4].Args).To(ContainElement(`cf-operator wait required-service`))
 			})
 
 			It("generates per job directories", func() {
