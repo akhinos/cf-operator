@@ -1382,6 +1382,17 @@ var _ = Describe("Manifest", func() {
 				Expect(manifestWithUpdate.InstanceGroups[1].Properties.Quarks.RequiredService).To(BeNil())
 			})
 
+			It("doesn't wait for instance groups without ports", func() {
+				manifestWithUpdate, err := env.BOSHManifestWithUpdateSerialAndWithoutPorts()
+				Expect(err).NotTo(HaveOccurred())
+				manifestWithUpdate.CalculateRequiredServices()
+				Expect(manifestWithUpdate.InstanceGroups).To(HaveLen(3))
+				expectedRequireService := "bpm-bpm1"
+				Expect(manifestWithUpdate.InstanceGroups[0].Properties.Quarks.RequiredService).To(BeNil())
+				Expect(manifestWithUpdate.InstanceGroups[1].Properties.Quarks.RequiredService).To(Equal(&expectedRequireService))
+				Expect(manifestWithUpdate.InstanceGroups[2].Properties.Quarks.RequiredService).To(Equal(&expectedRequireService))
+			})
+
 		})
 	})
 })

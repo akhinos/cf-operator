@@ -2640,3 +2640,39 @@ instance_groups:
           protocol: TCP
           internal: 1338
 `
+
+// BPMReleaseWithUpdateSerialAndWithoutPorts contains a manifest with serial but without ports
+const BPMReleaseWithUpdateSerialAndWithoutPorts = `
+name: bpm
+
+releases:
+- name: bpm
+  version: 1.0.4
+  url: docker.io/cfcontainerization
+  stemcell:
+    os: opensuse-42.3
+    version: 36.g03b4653-30.80-7.0.0_316.gcf9fe4a7
+update:
+  serial: true
+instance_groups:
+- name: bpm1
+  jobs:
+  - name: test-server
+    release: bpm
+    properties:
+      quarks:
+        ports:
+        - name: test-server
+          protocol: TCP
+          internal: 1337
+- name: bpm2
+  jobs:
+  - name: test-server
+    release: bpm
+- name: bpm3
+  update:
+    serial: true
+  jobs:
+  - name: test-server
+    release: bpm
+`

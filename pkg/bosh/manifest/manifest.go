@@ -211,7 +211,11 @@ func (m *Manifest) CalculateRequiredServices() {
 			serial = *ig.Update.Serial
 		}
 
-		if strings.Contains(ig.Name, "eirini") { //FIXME hack
+		//FIXME This is required because eirini is inserted as last instance group in https://github.com/SUSE/scf
+		// Without this condition, eirini would wait for all other instance groups. On the other hand, there are
+		// instance groups, which require eirini. Therefore, without this condition there will be a deadlock
+		// This can be removed, if the position of eirini in scf is fixed.
+		if strings.Contains(ig.Name, "eirini") {
 			continue
 		}
 

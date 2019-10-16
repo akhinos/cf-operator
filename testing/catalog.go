@@ -648,3 +648,12 @@ func (c *Catalog) BOSHManifestWithUpdateSerialInManifest() (*manifest.Manifest, 
 	}
 	return m, nil
 }
+
+// BOSHManifestWithUpdateSerialAndWithoutPorts returns a manifest with update serial and without ports
+func (c *Catalog) BOSHManifestWithUpdateSerialAndWithoutPorts() (*manifest.Manifest, error) {
+	m, err := manifest.LoadYAML([]byte(bm.BPMReleaseWithUpdateSerialAndWithoutPorts))
+	if err != nil {
+		return &manifest.Manifest{}, errors.Wrapf(err, manifestFailedMessage)
+	}
+	return m, nil
+}
