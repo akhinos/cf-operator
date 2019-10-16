@@ -10,8 +10,6 @@ import (
 
 func init() {
 	rootCmd.AddCommand(waitCmd)
-	waitCmd.Flags().StringP("bosh-manifest-path", "m", "", "path to the bosh manifest file")
-
 }
 
 var waitCmd = &cobra.Command{
@@ -24,7 +22,7 @@ var waitCmd = &cobra.Command{
 				break
 			}
 			fmt.Printf("Waiting for %s to be reachable\n", args[0])
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 5)
 		}
 	},
 }

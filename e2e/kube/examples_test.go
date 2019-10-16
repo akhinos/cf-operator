@@ -267,4 +267,23 @@ var _ = Describe("Examples Directory", func() {
 		})
 	})
 
+	FContext("serial example", func() {
+		BeforeEach(func() {
+			example = "bosh-deployment/boshdeployment-with-serial.yaml"
+		})
+
+		It("respects update serial", func() {
+			By("Wait for second POD")
+			podName1 := "serial-nats-v1-0"
+			podName2 := "serial-loggregator_agent-v1-0"
+			podWait(fmt.Sprintf("pod/%s", podName2))
+
+			status1, err := kubectl.PodStatus(namespace, podName1)
+			Expect(err).NotTo(HaveOccurred())
+			status2, err := kubectl.PodStatus(namespace, podName2)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status2.StartTime.Time.After(status1.StartTime.Time)).To(BeTrue())
+		})
+	})
+
 })

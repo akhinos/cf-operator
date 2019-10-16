@@ -161,6 +161,7 @@ func LoadYAML(data []byte) (*Manifest, error) {
 	return LoadYAMLWithName(data, nil)
 }
 
+// LoadYAMLWithName returns a new BOSH deployment manifest from a yaml representation with the given name
 func LoadYAMLWithName(data []byte, name *string) (*Manifest, error) {
 	m := &Manifest{}
 	err := yaml.Unmarshal(data, m, func(opt *json.Decoder) *json.Decoder {

@@ -158,11 +158,12 @@ func createWaitContainer(requiredService *string) []corev1.Container {
 	}
 	return []corev1.Container{{
 		Name:    "wait-for",
-		Image:   "busybox",
-		Command: []string{"/bin/sh"},
+		Image:   GetOperatorDockerImage(),
+		Command: []string{"/usr/bin/dumb-init", "--"},
 		Args: []string{
+			"/bin/sh",
 			"-xc",
-			fmt.Sprintf(`while ! nslookup %s ; do echo "waiting for %s";sleep 15;done`, *requiredService, *requiredService),
+			fmt.Sprintf("cf-operator wait %s", *requiredService),
 		},
 	}}
 

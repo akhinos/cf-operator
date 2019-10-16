@@ -1,0 +1,63 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-manifest
+data:
+  manifest: |
+    ---
+    name: serial
+    update:
+      serial: false
+    releases:
+    - name: nats
+      version: "26"
+      url: docker.io/cfcontainerization
+      stemcell:
+        os: opensuse-42.3
+        version: 30.g9c91e77-30.80-7.0.0_257.gb97ced55
+    - name: loggregator-agent
+      url: docker.io/cfcontainerization
+      version: "3.9"
+    instance_groups:
+    - name: nats
+      jobs:
+      - name: nats
+        release: nats
+        properties:
+          bpm:
+            enabled: true
+          nats:
+            user: admin
+            password: 123456
+          quarks:
+            ports:
+            - name: "nats1"
+              protocol: "TCP"
+              internal: 4222
+            - name: "nats1-routes"
+              protocol: TCP
+              internal: 4223
+    - name: loggregator_agent
+      release: loggregator-agent
+      update:
+        serial: true
+        properties:
+          bpm:
+            enabled: true
+          quarks:
+            - name: "ports1"
+              protocol: "TCP"
+              internal: 4222
+            - name: "ports2"
+              protocol: TCP
+              internal: 4223
+---
+apiVersion: fissile.cloudfoundry.org/v1alpha1
+kind: BOSHDeployment
+metadata:
+  name: serial
+spec:
+  manifest:
+    name: nats-manifest
+    type: configmap

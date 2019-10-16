@@ -2528,6 +2528,7 @@ instance_groups:
 name: scf-dev
 variables: []`
 
+// BPMReleaseWithUpdateSerial contains a manifest with some dependent instance groups
 const BPMReleaseWithUpdateSerial = `
 name: bpm
 
@@ -2601,6 +2602,7 @@ instance_groups:
 
 `
 
+// BPMReleaseWithUpdateSerialInManifest contains a manifest with bosh serial on manifest level
 const BPMReleaseWithUpdateSerialInManifest = `
 name: bpm
 
