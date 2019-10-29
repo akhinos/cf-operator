@@ -90,7 +90,8 @@ instance group.
 			return errors.Wrapf(err, bpmFailedMessage)
 		}
 
-		bpmInfo, err := dg.BPMInfo()
+		generation := viper.GetInt64("generation")
+		bpmInfo, err := dg.BPMInfo(generation)
 		if err != nil {
 			return errors.Wrapf(err, bpmFailedMessage)
 		}
@@ -119,11 +120,18 @@ func init() {
 	utilCmd.AddCommand(bpmConfigsCmd)
 	pf := bpmConfigsCmd.Flags()
 
-	argToEnv := map[string]string{}
+	pf.Int64P("generation", "", 1, "generation of bosh deployment")
+	viper.BindPFlag("generation", pf.Lookup("generation"))
+
+	argToEnv := map[string]string{
+		"generation": "GENERATION",
+	}
 
 	boshManifestFlagCobraSet(pf, argToEnv)
 	baseDirFlagCobraSet(pf, argToEnv)
 	instanceGroupFlagCobraSet(pf, argToEnv)
 	outputFilePathFlagCobraSet(pf, argToEnv)
+
 	cmd.AddEnvToUsage(bpmConfigsCmd, argToEnv)
+
 }

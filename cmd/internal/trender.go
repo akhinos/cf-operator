@@ -87,9 +87,10 @@ This will render a provided manifest instance-group
 			specIndex = (azIndex-1)*replicas + podOrdinal
 		}
 
+		generation := viper.GetInt64("generation")
 		podIP := net.ParseIP(viper.GetString("pod-ip"))
 
-		return manifest.RenderJobTemplates(boshManifestPath, jobsDir, outputDir, instanceGroupName, specIndex, podIP, replicas)
+		return manifest.RenderJobTemplates(boshManifestPath, jobsDir, outputDir, instanceGroupName, specIndex, podIP, replicas, generation)
 	},
 }
 
@@ -103,6 +104,7 @@ func init() {
 	pf.IntP("pod-ordinal", "", -1, "pod ordinal")
 	pf.IntP("replicas", "", -1, "number of replicas")
 	pf.StringP("pod-ip", "", "", "pod IP")
+	pf.Int64P("generation", "", 1, "generation of bosh deployment")
 
 	viper.BindPFlag("jobs-dir", pf.Lookup("jobs-dir"))
 	viper.BindPFlag("output-dir", pf.Lookup("output-dir"))
@@ -111,6 +113,7 @@ func init() {
 	viper.BindPFlag("pod-ordinal", pf.Lookup("pod-ordinal"))
 	viper.BindPFlag("replicas", pf.Lookup("replicas"))
 	viper.BindPFlag("pod-ip", pf.Lookup("pod-ip"))
+	viper.BindPFlag("generation", pf.Lookup("generation"))
 
 	argToEnv := map[string]string{
 		"jobs-dir":                "JOBS_DIR",
@@ -121,6 +124,7 @@ func init() {
 		"pod-ordinal":             "POD_ORDINAL",
 		"replicas":                "REPLICAS",
 		"pod-ip":                  converter.PodIPEnvVar,
+		"generation":              "GENERATION",
 	}
 
 	boshManifestFlagCobraSet(pf, argToEnv)

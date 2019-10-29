@@ -24,7 +24,7 @@ var _ = Describe("JobFactory", func() {
 
 	Describe("InstanceGroupManifestJob", func() {
 		It("creates init containers", func() {
-			qJob, err := factory.InstanceGroupManifestJob(*m)
+			qJob, err := factory.InstanceGroupManifestJob(*m, 1)
 			Expect(err).ToNot(HaveOccurred())
 			jobIG := qJob.Spec.Template.Spec
 			// Test init containers in the ig manifest qJob
@@ -36,14 +36,14 @@ var _ = Describe("JobFactory", func() {
 
 		It("handles an error when getting release image", func() {
 			m.Stemcells = nil
-			_, err := factory.InstanceGroupManifestJob(*m)
+			_, err := factory.InstanceGroupManifestJob(*m, 1)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("Generation of gathering job failed for manifest"))
 		})
 
 		It("does not generate the instance group containers when its instances is zero", func() {
 			m.InstanceGroups[0].Instances = 0
-			qJob, err := factory.InstanceGroupManifestJob(*m)
+			qJob, err := factory.InstanceGroupManifestJob(*m, 1)
 			Expect(err).ToNot(HaveOccurred())
 			jobIG := qJob.Spec.Template.Spec
 			Expect(len(jobIG.Template.Spec.InitContainers)).To(BeNumerically("<", 2))
@@ -53,7 +53,7 @@ var _ = Describe("JobFactory", func() {
 
 	Describe("BPMConfigsJob", func() {
 		It("has one spec-copier init container per instance group", func() {
-			job, err := factory.BPMConfigsJob(*m)
+			job, err := factory.BPMConfigsJob(*m, 1)
 			Expect(err).ToNot(HaveOccurred())
 
 			spec := job.Spec.Template.Spec.Template.Spec
@@ -64,18 +64,18 @@ var _ = Describe("JobFactory", func() {
 		})
 
 		It("has one bpm-configs container per instance group", func() {
-			job, err := factory.BPMConfigsJob(*m)
+			job, err := factory.BPMConfigsJob(*m, 1)
 			Expect(err).ToNot(HaveOccurred())
 
 			spec := job.Spec.Template.Spec.Template.Spec
 			Expect(len(spec.Containers)).To(Equal(len(m.InstanceGroups)))
 			Expect(spec.Containers[0].Name).To(Equal(m.InstanceGroups[0].Name))
-			Expect(spec.Containers[0].Args).To(Equal([]string{"util", "bpm-configs"}))
+			Expect(spec.Containers[0].Args).To(Equal([]string{"util", "bpm-configs", "--generation", "1"}))
 		})
 
 		It("does not generate the instance group containers when its instances is zero", func() {
 			m.InstanceGroups[0].Instances = 0
-			job, err := factory.BPMConfigsJob(*m)
+			job, err := factory.BPMConfigsJob(*m, 1)
 			Expect(err).ToNot(HaveOccurred())
 
 			spec := job.Spec.Template.Spec.Template.Spec

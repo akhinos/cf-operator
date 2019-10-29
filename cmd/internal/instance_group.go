@@ -82,7 +82,8 @@ This will resolve the properties of an instance group and return a manifest for 
 			return errors.Wrapf(err, dGatherFailedMessage)
 		}
 
-		manifest, err := dg.Manifest()
+		generation := viper.GetInt64("generation")
+		manifest, err := dg.Manifest(generation)
 		if err != nil {
 			return errors.Wrapf(err, dGatherFailedMessage)
 		}
@@ -112,7 +113,12 @@ func init() {
 	utilCmd.AddCommand(instanceGroupCmd)
 
 	pf := instanceGroupCmd.PersistentFlags()
-	argToEnv := map[string]string{}
+	pf.Int64P("generation", "", 1, "generation of bosh deployment")
+	viper.BindPFlag("generation", pf.Lookup("generation"))
+
+	argToEnv := map[string]string{
+		"generation": "GENERATION",
+	}
 
 	boshManifestFlagCobraSet(pf, argToEnv)
 	baseDirFlagCobraSet(pf, argToEnv)

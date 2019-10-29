@@ -75,7 +75,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 			})
 
 			It("it should have info about instances, azs", func() {
-				bpmInfo, err := dg.BPMInfo()
+				bpmInfo, err := dg.BPMInfo(1)
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(bpmInfo).ToNot(BeNil())
@@ -85,7 +85,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 			})
 
 			It("returns the bpm config for all jobs", func() {
-				bpmInfo, err := dg.BPMInfo()
+				bpmInfo, err := dg.BPMInfo(1)
 				Expect(err).ToNot(HaveOccurred())
 
 				bpm := bpmInfo.Configs["loggregator_trafficcontroller"]
@@ -123,7 +123,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("returns overwritten bpm config", func() {
-					bpmInfo, err := dg.BPMInfo()
+					bpmInfo, err := dg.BPMInfo(1)
 					Expect(err).ToNot(HaveOccurred())
 
 					bpm := bpmInfo.Configs["redis-server"]
@@ -140,7 +140,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("returns merged bpm config", func() {
-					bpmInfo, err := dg.BPMInfo()
+					bpmInfo, err := dg.BPMInfo(1)
 					Expect(err).ToNot(HaveOccurred())
 
 					bpm := bpmInfo.Configs["redis-server"]
@@ -159,7 +159,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("reports an error if the job had empty bpm configs", func() {
-					_, err := dg.BPMInfo()
+					_, err := dg.BPMInfo(1)
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Empty bpm configs about job '%s'", ig)))
 				})
@@ -173,7 +173,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("returns the bpm with resources for process", func() {
-					bpmInfo, err := dg.BPMInfo()
+					bpmInfo, err := dg.BPMInfo(1)
 					Expect(err).ToNot(HaveOccurred())
 
 					bpm := bpmInfo.Configs["doppler"]
@@ -190,7 +190,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("raises an error for bpm process without executable", func() {
-					_, err := dg.BPMInfo()
+					_, err := dg.BPMInfo(1)
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("invalid BPM process"))
 				})
@@ -204,7 +204,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 			})
 
 			It("should not have info about job instances, instance count, azs", func() {
-				manifest, err := dg.Manifest()
+				manifest, err := dg.Manifest(1)
 				Expect(err).ToNot(HaveOccurred())
 
 				//Check JobInstance for the redis-server job
@@ -222,7 +222,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 					})
 
 					It("resolves all required data if the job consumes a link", func() {
-						m, err := dg.Manifest()
+						m, err := dg.Manifest(1)
 						Expect(err).ToNot(HaveOccurred())
 
 						instanceGroup, ok := m.InstanceGroups.InstanceGroupByName(ig)
@@ -249,7 +249,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 						ig = "doppler"
 					})
 					It("has an empty consumes list if the job does not consume a link", func() {
-						m, err := dg.Manifest()
+						m, err := dg.Manifest(1)
 						Expect(err).ToNot(HaveOccurred())
 
 						ig, ok := m.InstanceGroups.InstanceGroupByName(ig)
@@ -270,7 +270,7 @@ var _ = Describe("InstanceGroupResolver", func() {
 				})
 
 				It("resolves all required data if the job consumes a link", func() {
-					manifest, err := dg.Manifest()
+					manifest, err := dg.Manifest(1)
 					Expect(err).ToNot(HaveOccurred())
 
 					// log-api instance_group, with loggregator_trafficcontroller job, consumes nil link from log-cache
