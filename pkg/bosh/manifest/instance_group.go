@@ -115,8 +115,15 @@ func (ig *InstanceGroup) IndexedServiceName(deploymentName string, index int) st
 func (ig *InstanceGroup) jobInstances(
 	deploymentName string,
 	jobName string,
+	generation int64,
 ) []JobInstance {
 	var jobsInstances []JobInstance
+
+	bootstrapIndex := 0
+	if generation > 1 {
+		bootstrapIndex = ig.Instances*len(ig.AZs) - 1
+	}
+
 	for i := 0; i < ig.Instances; i++ {
 		// TODO: Understand whether there are negative side-effects to using this
 		// default or not.
@@ -133,7 +140,7 @@ func (ig *InstanceGroup) jobInstances(
 			jobsInstances = append(jobsInstances, JobInstance{
 				Address:   address,
 				AZ:        az,
-				Bootstrap: index == 0,
+				Bootstrap: index == bootstrapIndex,
 				Index:     index,
 				Instance:  i,
 				Name:      name,

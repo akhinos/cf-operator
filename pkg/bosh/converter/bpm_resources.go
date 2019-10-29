@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
+
 	"github.com/pkg/errors"
 	"k8s.io/api/apps/v1beta2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -122,6 +124,14 @@ func (kc *KubeConverter) serviceToQuarksStatefulSet(
 	volumeClaims = append(volumeClaims, defaultVolumeClaims...)
 	volumeClaims = append(volumeClaims, bpmVolumeClaims...)
 
+	statefulSetLabels := statefulset.FilterLabels(instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels)
+
+	statefulSetAnnotations := instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Annotations
+	if statefulSetAnnotations == nil {
+		statefulSetAnnotations = make(map[string]string)
+	}
+	statefulSetAnnotations["quarks.cloudfoundry.org/canary-watch-time"] = instanceGroup.Update.CanaryWatchTime
+
 	extSts := qstsv1a1.QuarksStatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        instanceGroup.QuarksStatefulSetName(manifestName),
@@ -135,17 +145,17 @@ func (kc *KubeConverter) serviceToQuarksStatefulSet(
 			Template: v1beta2.StatefulSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        instanceGroup.NameSanitized(),
-					Labels:      instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels,
-					Annotations: instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Annotations,
+					Labels:      statefulSetLabels,
+					Annotations: statefulSetAnnotations,
 				},
 				Spec: v1beta2.StatefulSetSpec{
 					Replicas: pointers.Int32(int32(instanceGroup.Instances)),
 					Selector: &metav1.LabelSelector{
-						MatchLabels: instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels,
+						MatchLabels: statefulSetLabels,
 					},
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels:      instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels,
+							Labels:      statefulSetLabels,
 							Name:        instanceGroup.NameSanitized(),
 							Annotations: instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Annotations,
 						},

@@ -22,6 +22,8 @@ metadata:
 spec:
   updateOnConfigChange: true
   template:
+    annotations:
+      "quarks.cloudfoundry.org/canary-rollout": "Pending"
     spec:
       replicas: 2
       selector:
@@ -46,6 +48,9 @@ spec:
               - name: secret1-volume
                 readOnly: true
                 mountPath: "/etc/secret1-volume"
+              - name: secret1-volume
+                readOnly: true
+                mountPath: "/etc/secret1-volume2"
             env:
               - name: SPECIAL_KEY
                 valueFrom:

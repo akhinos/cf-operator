@@ -28,8 +28,8 @@ import (
 // JobFactory creates Jobs for a given manifest
 type JobFactory interface {
 	VariableInterpolationJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, error)
-	InstanceGroupManifestJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, error)
-	BPMConfigsJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, error)
+	InstanceGroupManifestJob(manifest bdm.Manifest, generation int64) (*qjv1a1.QuarksJob, error)
+	BPMConfigsJob(manifest bdm.Manifest, generation int64) (*qjv1a1.QuarksJob, error)
 }
 
 // Check that ReconcileBOSHDeployment implements the reconcile.Reconciler interface
@@ -115,7 +115,7 @@ func (r *ReconcileBOSHDeployment) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	// Apply the "Data Gathering" QuarksJob, which creates instance group manifests (ig-resolved) secrets
-	qJob, err = r.jobFactory.InstanceGroupManifestJob(*manifest)
+	qJob, err = r.jobFactory.InstanceGroupManifestJob(*manifest, instance.ObjectMeta.Generation)
 	if err != nil {
 		return reconcile.Result{}, log.WithEvent(instance, "InstanceGroupManifestError").Errorf(ctx, "Failed to build instance group manifest qJob: %v", err)
 
@@ -128,7 +128,7 @@ func (r *ReconcileBOSHDeployment) Reconcile(request reconcile.Request) (reconcil
 	}
 
 	// Apply the "BPM Configs" QuarksJob, which creates BPM config secrets
-	qJob, err = r.jobFactory.BPMConfigsJob(*manifest)
+	qJob, err = r.jobFactory.BPMConfigsJob(*manifest, instance.ObjectMeta.Generation)
 	if err != nil {
 		return reconcile.Result{}, log.WithEvent(instance, "BPMConfigsError").Errorf(ctx, "Failed to build BPM configs qJob: %v", err)
 

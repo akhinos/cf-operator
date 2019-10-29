@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
+
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -48,6 +50,7 @@ var addToManagerFuncs = []func(context.Context, *config.Config, manager.Manager)
 	quarkssecret.AddCertificateSigningRequest,
 	quarksstatefulset.AddQuarksStatefulSet,
 	quarksstatefulset.AddStatefulSetCleanup,
+	statefulset.AddStatefulSetRollout,
 }
 
 var addToSchemes = runtime.SchemeBuilder{

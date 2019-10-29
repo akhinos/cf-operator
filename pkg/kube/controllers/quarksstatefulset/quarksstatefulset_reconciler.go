@@ -8,6 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
+
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"github.com/pkg/errors"
 	"k8s.io/api/apps/v1beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -228,13 +232,21 @@ func (r *ReconcileQuarksStatefulSet) createStatefulSet(ctx context.Context, qSta
 		return errors.Wrapf(err, "could not set owner for StatefulSet '%s' to QuarksStatefulSet '%s' in namespace '%s'", statefulSet.Name, qStatefulSet.Name, qStatefulSet.Namespace)
 	}
 
-	// Create the StatefulSet
-	if err := r.client.Create(ctx, statefulSet); err != nil {
-		return errors.Wrapf(err, "could not create StatefulSet '%s' for QuarksStatefulSet '%s' in namespace '%s'", statefulSet.Name, qStatefulSet.Name, qStatefulSet.Namespace)
+	statefulSetMutateFn := func(sfs *v1beta2.StatefulSet) controllerutil.MutateFn {
+		updated := sfs.DeepCopy()
+		return func() error {
+			sfs.Labels = updated.Labels
+			sfs.Annotations = updated.Annotations
+			sfs.Spec = updated.Spec
+			return nil
+		}
 	}
 
-	ctxlog.Info(ctx, "Created StatefulSet '", statefulSet.Name, "' for QuarksStatefulSet '", qStatefulSet.Name, "' in namespace '", qStatefulSet.Namespace, "'.")
-
+	// Create or update the StatefulSet
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.client, statefulSet, statefulSetMutateFn(statefulSet)); err != nil {
+		return errors.Wrapf(err, "could not create or update StatefulSet '%s' for QuarksStatefulSet '%s' in namespace '%s'", statefulSet.Name, qStatefulSet.Name, qStatefulSet.Namespace)
+	}
+	ctxlog.Info(ctx, "Created/Updated StatefulSet '", statefulSet.Name, "' for QuarksStatefulSet '", qStatefulSet.Name, "' in namespace '", qStatefulSet.Namespace, "'.")
 	return nil
 }
 
@@ -301,12 +313,14 @@ func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qst
 	annotations[qstsv1a1.AnnotationVersion] = fmt.Sprintf("%d", version)
 
 	// Set updated properties
-	statefulSet.SetName(fmt.Sprintf("%s-v%d", statefulSetNamePrefix, version))
+	statefulSet.SetName(statefulSetNamePrefix)
 	statefulSet.SetLabels(labels)
 	statefulSet.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: labels,
 	}
 	statefulSet.SetAnnotations(annotations)
+	statefulSet.Spec.Template.SetAnnotations(annotations)
+	statefulset.ConfigureStatefulSetForRollout(statefulSet)
 
 	return statefulSet, nil
 }

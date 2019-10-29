@@ -16,9 +16,9 @@ metadata:
   name: example1
 ---
 apiVersion: quarks.cloudfoundry.org/v1alpha1
-kind: QuarksStatefulSet
+kind: ExtendedStatefulSet
 metadata:
-  name: example-quarks-statefulset
+  name: example-extendedstatefulset
 spec:
   updateOnConfigChange: true
   template:
@@ -41,7 +41,7 @@ spec:
               secretName: example1
           containers:
           - name: busybox
-            image: busybox
+            image: none-existing-busybox
             command:
             - sleep
             - "3600"

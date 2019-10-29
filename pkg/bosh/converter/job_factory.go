@@ -3,6 +3,7 @@ package converter
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
@@ -152,7 +153,7 @@ func (f *JobFactory) VariableInterpolationJob(manifest bdm.Manifest) (*qjv1a1.Qu
 }
 
 // InstanceGroupManifestJob generates the job to create an instance group manifest
-func (f *JobFactory) InstanceGroupManifestJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, error) {
+func (f *JobFactory) InstanceGroupManifestJob(manifest bdm.Manifest, generation int64) (*qjv1a1.QuarksJob, error) {
 	containers := []corev1.Container{}
 
 	// QuarksJob will always pick the latest version for versioned secrets
@@ -162,7 +163,7 @@ func (f *JobFactory) InstanceGroupManifestJob(manifest bdm.Manifest) (*qjv1a1.Qu
 		if ig.Instances != 0 {
 			// One container per Instance Group
 			// There will be one secret generated for each of these containers
-			containers = append(containers, f.gatheringContainer("instance-group", desiredManifestName, ig.Name))
+			containers = append(containers, f.gatheringContainer("instance-group", desiredManifestName, ig.Name, generation))
 		}
 	}
 
@@ -171,7 +172,7 @@ func (f *JobFactory) InstanceGroupManifestJob(manifest bdm.Manifest) (*qjv1a1.Qu
 }
 
 // BPMConfigsJob returns an quarks job to calculate BPM information
-func (f *JobFactory) BPMConfigsJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, error) {
+func (f *JobFactory) BPMConfigsJob(manifest bdm.Manifest, generation int64) (*qjv1a1.QuarksJob, error) {
 	containers := []corev1.Container{}
 	desiredManifestName := names.DesiredManifestName(manifest.Name, "1")
 
@@ -179,7 +180,7 @@ func (f *JobFactory) BPMConfigsJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, er
 		if ig.Instances != 0 {
 			// One container per Instance Group
 			// There will be one secret generated for each of these containers
-			containers = append(containers, f.gatheringContainer("bpm-configs", desiredManifestName, ig.Name))
+			containers = append(containers, f.gatheringContainer("bpm-configs", desiredManifestName, ig.Name, generation))
 		}
 	}
 
@@ -187,12 +188,12 @@ func (f *JobFactory) BPMConfigsJob(manifest bdm.Manifest) (*qjv1a1.QuarksJob, er
 	return f.gatheringJob(qJobName, manifest, desiredManifestName, names.DeploymentSecretBpmInformation, containers)
 }
 
-func (f *JobFactory) gatheringContainer(cmd, desiredManifestName string, instanceGroupName string) corev1.Container {
+func (f *JobFactory) gatheringContainer(cmd, desiredManifestName string, instanceGroupName string, generation int64) corev1.Container {
 	return corev1.Container{
 		Name:            names.Sanitize(instanceGroupName),
 		Image:           GetOperatorDockerImage(),
 		ImagePullPolicy: GetOperatorImagePullPolicy(),
-		Args:            []string{"util", cmd},
+		Args:            []string{"util", cmd, "--generation", strconv.FormatInt(generation, 10)},
 		VolumeMounts: []corev1.VolumeMount{
 			withOpsVolumeMount(desiredManifestName),
 			releaseSourceVolumeMount(),

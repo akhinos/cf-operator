@@ -45,10 +45,10 @@ func NewInstanceGroupResolver(basedir string, manifest Manifest, instanceGroupNa
 // azs, env, variables and a map of all BOSH jobs in the instance group.
 // The output will be persisted by QuarksJob as 'bpm.yaml' in the
 // `<deployment-name>.bpm.<instance-group>-v<version>` secret.
-func (dg *InstanceGroupResolver) BPMInfo() (BPMInfo, error) {
+func (dg *InstanceGroupResolver) BPMInfo(generation int64) (BPMInfo, error) {
 	bpmInfo := BPMInfo{}
 
-	err := dg.resolveManifest()
+	err := dg.resolveManifest(generation)
 	if err != nil {
 		return bpmInfo, err
 	}
@@ -74,8 +74,8 @@ func (dg *InstanceGroupResolver) BPMInfo() (BPMInfo, error) {
 // That manifest includes the gathered data from BPM and links.
 // The output will be persisted by QuarksJob as 'properties.yaml' in the
 // `<deployment-name>.ig-resolved.<instance-group>-v<version>` secret.
-func (dg *InstanceGroupResolver) Manifest() (Manifest, error) {
-	err := dg.resolveManifest()
+func (dg *InstanceGroupResolver) Manifest(generation int64) (Manifest, error) {
+	err := dg.resolveManifest(generation)
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -120,12 +120,12 @@ func (dg *InstanceGroupResolver) Manifest() (Manifest, error) {
 // * job properties
 // * bosh links
 // * bpm yaml file data
-func (dg *InstanceGroupResolver) resolveManifest() error {
+func (dg *InstanceGroupResolver) resolveManifest(generation int64) error {
 	if err := runPreRenderScripts(dg.instanceGroup); err != nil {
 		return err
 	}
 
-	if err := dg.collectReleaseSpecsAndProviderLinks(); err != nil {
+	if err := dg.collectReleaseSpecsAndProviderLinks(generation); err != nil {
 		return err
 	}
 
@@ -141,7 +141,7 @@ func (dg *InstanceGroupResolver) resolveManifest() error {
 }
 
 // collectReleaseSpecsAndProviderLinks will collect all release specs and generate bosh links for provider jobs
-func (dg *InstanceGroupResolver) collectReleaseSpecsAndProviderLinks() error {
+func (dg *InstanceGroupResolver) collectReleaseSpecsAndProviderLinks(generation int64) error {
 	for _, instanceGroup := range dg.manifest.InstanceGroups {
 		serviceName := dg.manifest.DNS.HeadlessServiceName(instanceGroup.Name)
 
@@ -166,7 +166,7 @@ func (dg *InstanceGroupResolver) collectReleaseSpecsAndProviderLinks() error {
 			// Generate instance spec for each ig instance
 			// This will be stored inside the current job under
 			// job.properties.quarks
-			jobsInstances := instanceGroup.jobInstances(dg.manifest.Name, job.Name)
+			jobsInstances := instanceGroup.jobInstances(dg.manifest.Name, job.Name, generation)
 
 			// set jobs.properties.quarks.instances with the ig instances
 			instanceGroup.Jobs[jobIdx].Properties.Quarks.Instances = jobsInstances
