@@ -125,8 +125,10 @@ func (kc *KubeConverter) serviceToQuarksStatefulSet(
 	volumeClaims = append(volumeClaims, bpmVolumeClaims...)
 
 	statefulSetLabels := statefulset.FilterLabels(instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels)
-	statefulSetAnnotations := statefulset.ComputeAnnotations(instanceGroup)
-
+	statefulSetAnnotations, err := statefulset.ComputeAnnotations(instanceGroup)
+	if err != nil {
+		return qstsv1a1.QuarksStatefulSet{}, errors.Wrapf(err, "computing annotations failed for instance group %s", instanceGroup.Name)
+	}
 	extSts := qstsv1a1.QuarksStatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        instanceGroup.QuarksStatefulSetName(manifestName),

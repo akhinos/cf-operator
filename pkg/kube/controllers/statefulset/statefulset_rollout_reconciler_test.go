@@ -2,6 +2,7 @@ package statefulset_test
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
@@ -50,6 +51,9 @@ var _ = Describe("ReconcileStatefulSetRollout", func() {
 
 	BeforeEach(func() {
 		annotations["quarks.cloudfoundry.org/canary-rollout"] = "Pending"
+		annotations["quarks.cloudfoundry.org/canary-watch-time"] = "100000"
+		annotations["quarks.cloudfoundry.org/update-watch-time"] = "100000"
+		annotations["quarks.cloudfoundry.org/update-start-time"] = strconv.FormatInt(time.Now().Unix(), 10)
 		replicas = 2
 		readyReplicas = 2
 		updatedReplicas = 0
@@ -155,7 +159,6 @@ var _ = Describe("ReconcileStatefulSetRollout", func() {
 			BeforeEach(func() {
 				annotations["quarks.cloudfoundry.org/canary-rollout"] = "Canary"
 			})
-
 			Context("replica=3, updatedReplica=1", func() {
 				request := reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo-1", Namespace: "default"}}
 
@@ -164,6 +167,17 @@ var _ = Describe("ReconcileStatefulSetRollout", func() {
 					readyReplicas = replicas
 					updatedReplicas = 1
 					partition = replicas - 1
+				})
+				When("and canary_watch_time is exceeded", func() {
+					BeforeEach(func() {
+						annotations["quarks.cloudfoundry.org/canary-watch-time"] = "-1"
+					})
+					It("sets state to 'Failed'", func() {
+						request := reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
+						_, err := reconciler.Reconcile(request)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(updatedStatefulSet.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-rollout", "Failed"))
+					})
 				})
 
 				It("the partition is decreased by 1", func() {
@@ -205,9 +219,37 @@ var _ = Describe("ReconcileStatefulSetRollout", func() {
 
 		})
 
+		Context("in rollout state 'CanaryUpscale'", func() {
+			BeforeEach(func() {
+				annotations["quarks.cloudfoundry.org/canary-rollout"] = "CanaryUpscale"
+			})
+			When("and update_watch_time is exceeded", func() {
+				BeforeEach(func() {
+					annotations["quarks.cloudfoundry.org/update-watch-time"] = "-1"
+				})
+				It("sets state to 'Failed'", func() {
+					request := reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
+					_, err := reconciler.Reconcile(request)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(updatedStatefulSet.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-rollout", "Failed"))
+				})
+			})
+		})
+
 		Context("in rollout state 'Pending'", func() {
 			BeforeEach(func() {
 				annotations["quarks.cloudfoundry.org/canary-rollout"] = "Pending"
+			})
+			Context("with a canary_watch_time", func() {
+				BeforeEach(func() {
+					annotations["quarks.cloudfoundry.org/canary-watch-time"] = "4000"
+				})
+				It("retriggers a reconcile in canary_watch_time ms", func() {
+					request := reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
+					response, err := reconciler.Reconcile(request)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(response.RequeueAfter).To(BeEquivalentTo(4000 * time.Millisecond))
+				})
 			})
 
 			Context("readyReplica=1, updatedReplica=1", func() {
@@ -295,6 +337,37 @@ var _ = Describe("ReconcileStatefulSetRollout", func() {
 					Expect(reconcile.Result{}).To(Equal(result))
 					Expect(client.UpdateCallCount()).To(Equal(1))
 					Expect(updatedStatefulSet.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-rollout", "Rollout"))
+				})
+			})
+			When("update_watch_time is exceeded", func() {
+				BeforeEach(func() {
+					annotations["quarks.cloudfoundry.org/update-watch-time"] = "-1"
+				})
+				It("sets state to 'Failed'", func() {
+					request := reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
+					_, err := reconciler.Reconcile(request)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(updatedStatefulSet.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-rollout", "Failed"))
+				})
+			})
+		})
+
+		Context("in rollout state 'Done'", func() {
+			request := reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo", Namespace: "default"}}
+			BeforeEach(func() {
+				annotations["quarks.cloudfoundry.org/canary-rollout"] = "Done"
+			})
+
+			When("and canary_watch_time is exceeded", func() {
+				BeforeEach(func() {
+					annotations["quarks.cloudfoundry.org/canary-wa"] = "Done"
+					annotations["quarks.cloudfoundry.org/canary-watch-time"] = "-1"
+				})
+				It("state remains 'Done'", func() {
+					result, err := reconciler.Reconcile(request)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(reconcile.Result{}).To(Equal(result))
+					Expect(client.UpdateCallCount()).To(Equal(0))
 				})
 			})
 

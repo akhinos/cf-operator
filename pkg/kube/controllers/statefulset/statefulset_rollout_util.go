@@ -3,6 +3,9 @@ package statefulset
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
+	"time"
 
 	"code.cloudfoundry.org/quarks-utils/pkg/pointers"
 
@@ -22,6 +25,7 @@ func ConfigureStatefulSetForRollout(statefulSet *v1beta2.StatefulSet) {
 		Partition: pointers.Int32(maxInt32(minInt32(*statefulSet.Spec.Replicas, statefulSet.Status.Replicas)-1, 0)),
 	}
 	statefulSet.Annotations[annotationCanaryRollout] = rolloutStatePending
+	statefulSet.Annotations[annotationUpdateStartTime] = strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 // FilterLabels filters out labels, that are not suitable for StatefulSet updates
@@ -37,14 +41,38 @@ func FilterLabels(labels map[string]string) map[string]string {
 }
 
 //ComputeAnnotations computes annotations from the instance group
-func ComputeAnnotations(ig *manifest.InstanceGroup) map[string]string {
+func ComputeAnnotations(ig *manifest.InstanceGroup) (map[string]string, error) {
 	statefulSetAnnotations := ig.Env.AgentEnvBoshConfig.Agent.Settings.Annotations
 	if statefulSetAnnotations == nil {
 		statefulSetAnnotations = make(map[string]string)
 	}
-	statefulSetAnnotations[annotationCanaryWatchTime] = ig.Update.CanaryWatchTime
-	statefulSetAnnotations[annotationUpdateWatchTime] = ig.Update.UpdateWatchTime
-	return statefulSetAnnotations
+
+	canaryWatchTime, err := ExtractWatchTime(ig.Update.CanaryWatchTime, "canary_watch_time")
+	if err != nil {
+		return nil, err
+	}
+	statefulSetAnnotations[annotationCanaryWatchTime] = canaryWatchTime
+
+	updateWatchTime, err := ExtractWatchTime(ig.Update.UpdateWatchTime, "update_watch_time")
+	if err != nil {
+		return nil, err
+	}
+	statefulSetAnnotations[annotationUpdateWatchTime] = updateWatchTime
+
+	return statefulSetAnnotations, nil
+}
+
+func ExtractWatchTime(rawWatchTime string, field string) (string, error) {
+	rangeRegex := regexp.MustCompile(`^\s*(\d+)\s*-\s*(\d+)\s*$`)
+	if matches := rangeRegex.FindStringSubmatch(rawWatchTime); len(matches) > 0 {
+		// Ignore the lower boundary, because the API-Server triggers reconciles
+		return matches[2], nil
+	}
+	absoluteRegex := regexp.MustCompile(`^\s*(\d+)\s*$`)
+	if matches := absoluteRegex.FindStringSubmatch(rawWatchTime); len(matches) > 0 {
+		return matches[1], nil
+	}
+	return "", fmt.Errorf("invalid %s", field)
 }
 
 // CleanupNonReadyPod deletes all pods, that are not ready
