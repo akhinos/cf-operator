@@ -3,6 +3,8 @@ package statefulset
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"code.cloudfoundry.org/cf-operator/pkg/kube/apis"
 
@@ -29,6 +31,7 @@ var (
 	annotationCanaryRollout   = fmt.Sprintf("%s/canary-rollout", apis.GroupName)
 	annotationCanaryWatchTime = fmt.Sprintf("%s/canary-watch-time", apis.GroupName)
 	annotationUpdateWatchTime = fmt.Sprintf("%s/update-watch-time", apis.GroupName)
+	annotationUpdateStartTime = fmt.Sprintf("%s/update-start-time", apis.GroupName)
 )
 
 // NewStatefulSetRolloutReconciler returns a new reconcile.Reconciler
@@ -65,13 +68,27 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 		ctxlog.Debug(ctx, "StatefulSet not found ", request.NamespacedName)
 		return reconcile.Result{}, err
 	}
-
-	dirty := false
-
+	var result reconcile.Result
 	var status = r.getState(&statefulSet)
 	var newStatus = status
+	dirty := false
+
+	defer func() {
+		if newStatus != statefulSet.Annotations[annotationCanaryRollout] {
+			statefulSet.Annotations[annotationCanaryRollout] = newStatus
+			dirty = true
+		}
+		if dirty {
+			r.update(ctx, &statefulSet)
+		}
+	}()
+
 	switch status {
 	case rolloutStateCanaryUpscale:
+		if hasTimedOutOrIsInvalid(ctx, statefulSet, annotationUpdateWatchTime) {
+			newStatus = rolloutStateFailed
+			break
+		}
 		if statefulSet.Status.Replicas == *statefulSet.Spec.Replicas && statefulSet.Status.ReadyReplicas == *statefulSet.Spec.Replicas {
 			if *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition == 0 {
 				newStatus = rolloutStateDone
@@ -82,8 +99,16 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 	case rolloutStateDone:
 	case rolloutStateFailed:
 	case rolloutStateCanary:
+		if hasTimedOutOrIsInvalid(ctx, statefulSet, annotationCanaryWatchTime) {
+			newStatus = rolloutStateFailed
+			break
+		}
 		fallthrough
 	case rolloutStateRollout:
+		if hasTimedOutOrIsInvalid(ctx, statefulSet, annotationUpdateWatchTime) {
+			newStatus = rolloutStateFailed
+			break
+		}
 		ready, err := readyAndUpdated(ctx, r.client, &statefulSet)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -106,6 +131,10 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 		}
 		newStatus = r.getState(&statefulSet)
 	case rolloutStatePending:
+		canaryWatchTime, _ := strconv.Atoi(statefulSet.Annotations[annotationCanaryWatchTime])
+		result = reconcile.Result{
+			RequeueAfter: time.Millisecond * time.Duration(canaryWatchTime),
+		}
 		if statefulSet.Status.Replicas < *statefulSet.Spec.Replicas {
 			newStatus = rolloutStateCanaryUpscale
 		} else {
@@ -117,14 +146,26 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 			}
 		}
 	}
-	if newStatus != statefulSet.Annotations[annotationCanaryRollout] {
-		statefulSet.Annotations[annotationCanaryRollout] = newStatus
-		dirty = true
+	return result, nil
+}
+
+func hasTimedOutOrIsInvalid(ctx context.Context, statefulSet v1beta2.StatefulSet, watchTimeAnnotation string) bool {
+	updateStartTimeUnix, err := strconv.ParseInt(statefulSet.Annotations[annotationUpdateStartTime], 10, 64)
+	if err != nil {
+		ctxlog.Errorf(ctx, "Invalid annotation %s: %s", annotationUpdateStartTime, statefulSet.Annotations[annotationUpdateStartTime])
+		return true
 	}
-	if dirty {
-		r.update(ctx, &statefulSet)
+	updateStartTime := time.Unix(updateStartTimeUnix, 0)
+	watchTime, err := strconv.Atoi(statefulSet.Annotations[watchTimeAnnotation])
+	if err != nil {
+		ctxlog.Errorf(ctx, "Invalid annotation %s: %s", watchTimeAnnotation, statefulSet.Annotations[watchTimeAnnotation])
+		return true
 	}
-	return reconcile.Result{}, nil
+	if time.Now().After(updateStartTime.Add(time.Duration(watchTime) * time.Millisecond)) {
+		return true
+	}
+	return false
+
 }
 
 func (r *ReconcileStatefulSetRollout) getState(sts *v1beta2.StatefulSet) string {

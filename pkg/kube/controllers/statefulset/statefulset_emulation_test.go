@@ -3,6 +3,8 @@ package statefulset_test
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
@@ -134,6 +136,10 @@ func (sse *StatefulSetEmulation) Update(updateOpts ...UpdateOpts) *event.UpdateE
 		updateOpt(sse)
 	}
 	statefulset.ConfigureStatefulSetForRollout(&sse.statefulSet)
+	sse.statefulSet.Annotations["quarks.cloudfoundry.org/canary-watch-time"] = "100000"
+	sse.statefulSet.Annotations["quarks.cloudfoundry.org/update-watch-time"] = "100000"
+	sse.statefulSet.Annotations["quarks.cloudfoundry.org/update-start-time"] = strconv.FormatInt(time.Now().Unix(), 10)
+
 	updateEvent := event.UpdateEvent{ObjectOld: &old, ObjectNew: &sse.statefulSet}
 	return &updateEvent
 }

@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
+
+	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
 
 	"code.cloudfoundry.org/cf-operator/pkg/bosh/manifest"
 
@@ -226,22 +227,11 @@ func validateUpdateBlock(manifest manifest.Manifest) error {
 	if manifest.Update == nil {
 		return errors.New("no update block specified")
 	}
-	if err := validateWatchTime(manifest.Update.CanaryWatchTime, "canary_watch_time"); err != nil {
+	if _, err := statefulset.ExtractWatchTime(manifest.Update.CanaryWatchTime, "canary_watch_time"); err != nil {
 		return err
 	}
-	return validateWatchTime(manifest.Update.UpdateWatchTime, "update_watch_time")
-}
-
-func validateWatchTime(watchTime string, field string) error {
-	if watchTime == "" {
-		return fmt.Errorf("no %s specified", field)
-	}
-	absoluteRegex := regexp.MustCompile(`^\s*(\d+)\s*$`)
-	rangeRegex := regexp.MustCompile(`^\s*(\d+)\s*-\s*(\d+)\s*$`)
-	if absoluteRegex.MatchString(watchTime) || rangeRegex.MatchString(watchTime) {
-		return nil
-	}
-	return fmt.Errorf("%s must be an integer or a range of two integers", field)
+	_, err := statefulset.ExtractWatchTime(manifest.Update.UpdateWatchTime, "update_watch_time")
+	return err
 }
 
 // Validator implements inject.Client.
