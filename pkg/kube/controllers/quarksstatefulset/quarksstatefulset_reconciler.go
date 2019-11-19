@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
-
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/pkg/errors"
@@ -25,6 +23,7 @@ import (
 
 	"code.cloudfoundry.org/cf-operator/pkg/bosh/manifest"
 	qstsv1a1 "code.cloudfoundry.org/cf-operator/pkg/kube/apis/quarksstatefulset/v1alpha1"
+	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
 	"code.cloudfoundry.org/quarks-utils/pkg/config"
 	"code.cloudfoundry.org/quarks-utils/pkg/ctxlog"
 	"code.cloudfoundry.org/quarks-utils/pkg/meltdown"
@@ -318,6 +317,7 @@ func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qst
 	r.injectContainerEnv(&statefulSet.Spec.Template.Spec, zoneIndex, zoneName, qStatefulSet.Spec.Template.Spec.Replicas)
 
 	annotations[qstsv1a1.AnnotationVersion] = fmt.Sprintf("%d", version)
+	annotations[statefulset.AnnotationCanaryRolloutEnabled] = "true"
 
 	// Set updated properties
 	statefulSet.SetName(statefulSetNamePrefix)
@@ -327,7 +327,6 @@ func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qst
 	}
 	statefulSet.SetAnnotations(annotations)
 	statefulSet.Spec.Template.SetAnnotations(annotations)
-	statefulset.ConfigureStatefulSetForRollout(statefulSet)
 
 	return statefulSet, nil
 }

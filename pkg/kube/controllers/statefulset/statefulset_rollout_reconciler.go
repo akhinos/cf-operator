@@ -32,6 +32,8 @@ const (
 )
 
 var (
+	// AnnotationCanaryRolloutEnabled if set to "true" canary behaviour is desired
+	AnnotationCanaryRolloutEnabled = fmt.Sprintf("%s/canary-rollout-enabled", apis.GroupName)
 	// annotationCanaryRollout is the state of the canary rollout of the stateful set
 	annotationCanaryRollout   = fmt.Sprintf("%s/canary-rollout", apis.GroupName)
 	annotationCanaryWatchTime = fmt.Sprintf("%s/canary-watch-time", apis.GroupName)

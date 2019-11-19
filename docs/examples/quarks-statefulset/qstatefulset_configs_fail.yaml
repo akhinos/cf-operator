@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       annotations:
-        "quarks.cloudfoundry.org/canary-rollout": "Pending"
+        "quarks.cloudfoundry.org/canary-rollout-enabled": "true"
         "quarks.cloudfoundry.org/update-watch-time": "120000"
         "quarks.cloudfoundry.org/canary-watch-time": "120000"
       labels:
