@@ -245,7 +245,7 @@ var _ = Describe("Examples Directory", func() {
 			Expect(err).ToNot(HaveOccurred(), "error waiting for cert secret")
 
 			By("Checking the generated certificates")
-			outSecret, err := cmdHelper.GetData(namespace, "secrfet", "example.var-loggregator-ca", "go-template={{.data.certificate}}")
+			outSecret, err := cmdHelper.GetData(namespace, "secret", "example.var-loggregator-ca", "go-template={{.data.certificate}}")
 			Expect(err).ToNot(HaveOccurred())
 			rootPEM, _ := b64.StdEncoding.DecodeString(string(outSecret))
 
