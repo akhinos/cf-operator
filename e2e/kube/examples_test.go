@@ -79,7 +79,7 @@ var _ = Describe("Examples Directory", func() {
 			podWait("pod/example-quarks-statefulset-1")
 
 			By("Checking the updated value in the env")
-			err = wait.PollImmediate(time.Second*5, time.Second*120, func() (bool, error) {
+			err := wait.PollImmediate(time.Second*5, time.Second*120, func() (bool, error) {
 				err := kubectl.RunCommandWithCheckString(namespace, "example-quarks-statefulset-0", "env", "SPECIAL_KEY=value1Updated")
 				if err != nil {
 					return false, nil

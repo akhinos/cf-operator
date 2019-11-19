@@ -77,11 +77,8 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 				newStatus = rolloutStateRollout
 			}
 		}
-		break
 	case rolloutStateDone:
-		break
 	case rolloutStateFailed:
-		break
 	case rolloutStateCanary:
 		fallthrough
 	case rolloutStateRollout:
@@ -106,7 +103,6 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 			return reconcile.Result{}, err
 		}
 		newStatus = r.getState(&statefulSet)
-		break
 	case rolloutStatePending:
 		if statefulSet.Status.Replicas < *statefulSet.Spec.Replicas {
 			newStatus = rolloutStateCanaryUpscale
@@ -118,7 +114,6 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 				return reconcile.Result{}, err
 			}
 		}
-		break
 	}
 	if newStatus != statefulSet.Annotations[annotationCanaryRollout] {
 		statefulSet.Annotations[annotationCanaryRollout] = newStatus
