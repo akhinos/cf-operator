@@ -204,7 +204,7 @@ func (v *Validator) Handle(_ context.Context, req admission.Request) admission.R
 			},
 		}
 	}
-	err = validateCanaryWatchTime(*manifest)
+	err = validateUpdateBlock(*manifest)
 	if err != nil {
 		return admission.Response{
 			AdmissionResponse: v1beta1.AdmissionResponse{
@@ -222,17 +222,26 @@ func (v *Validator) Handle(_ context.Context, req admission.Request) admission.R
 	}
 }
 
-func validateCanaryWatchTime(manifest manifest.Manifest) error {
-	if manifest.Update == nil || manifest.Update.CanaryWatchTime == "" {
-		return errors.New("no canary_watch_time specified")
+func validateUpdateBlock(manifest manifest.Manifest) error {
+	if manifest.Update == nil {
+		return errors.New("no update block specified")
 	}
-	canaryWatchTime := manifest.Update.CanaryWatchTime
+	if err := validateWatchTime(manifest.Update.CanaryWatchTime, "canary_watch_time"); err != nil {
+		return err
+	}
+	return validateWatchTime(manifest.Update.UpdateWatchTime, "update_watch_time")
+}
+
+func validateWatchTime(watchTime string, field string) error {
+	if watchTime == "" {
+		return fmt.Errorf("no %s specified", field)
+	}
 	absoluteRegex := regexp.MustCompile(`^\s*(\d+)\s*$`)
 	rangeRegex := regexp.MustCompile(`^\s*(\d+)\s*-\s*(\d+)\s*$`)
-	if absoluteRegex.MatchString(canaryWatchTime) || rangeRegex.MatchString(canaryWatchTime) {
+	if absoluteRegex.MatchString(watchTime) || rangeRegex.MatchString(watchTime) {
 		return nil
 	}
-	return errors.New("watch time must be an integer or a range of two integers")
+	return fmt.Errorf("%s must be an integer or a range of two integers", field)
 }
 
 // Validator implements inject.Client.

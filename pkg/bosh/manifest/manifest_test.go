@@ -1402,16 +1402,19 @@ var _ = Describe("Manifest", func() {
 				By("propagating if ig has no update block")
 				Expect(*manifest.InstanceGroups[0].Update).To(Equal(Update{
 					CanaryWatchTime: "20000-1200000",
+					UpdateWatchTime: "20000-1200000",
 					Serial:          pointer.BoolPtr(false),
 				}))
 				By("retaining ig's serial configuration")
 				Expect(*manifest.InstanceGroups[1].Update).To(Equal(Update{
 					CanaryWatchTime: "20000-1200000",
+					UpdateWatchTime: "20000-1200000",
 					Serial:          pointer.BoolPtr(true),
 				}))
 				By("retaining ig's canaryWatchTime configuration")
 				Expect(*manifest.InstanceGroups[2].Update).To(Equal(Update{
 					CanaryWatchTime: "10000-9900000",
+					UpdateWatchTime: "10000-9900000",
 					Serial:          pointer.BoolPtr(false),
 				}))
 			})

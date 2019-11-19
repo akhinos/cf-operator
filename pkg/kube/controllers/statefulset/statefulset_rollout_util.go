@@ -36,6 +36,17 @@ func FilterLabels(labels map[string]string) map[string]string {
 	return statefulSetLabels
 }
 
+//ComputeAnnotations computes annotations from the instance group
+func ComputeAnnotations(ig *manifest.InstanceGroup) map[string]string {
+	statefulSetAnnotations := ig.Env.AgentEnvBoshConfig.Agent.Settings.Annotations
+	if statefulSetAnnotations == nil {
+		statefulSetAnnotations = make(map[string]string)
+	}
+	statefulSetAnnotations[annotationCanaryWatchTime] = ig.Update.CanaryWatchTime
+	statefulSetAnnotations[annotationUpdateWatchTime] = ig.Update.UpdateWatchTime
+	return statefulSetAnnotations
+}
+
 // CleanupNonReadyPod deletes all pods, that are not ready
 func CleanupNonReadyPod(ctx context.Context, client crc.Client, statefulSet *v1beta2.StatefulSet, index int32) error {
 	ctxlog.Debug(ctx, "Cleaning up non ready pod for StatefulSet ", statefulSet.Namespace, "/", statefulSet.Name, "-", index)

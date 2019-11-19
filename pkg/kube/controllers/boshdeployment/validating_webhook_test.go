@@ -96,7 +96,7 @@ var _ = Describe("When the validating webhook handles a manifest", func() {
 		It("the manifest is rejected", func() {
 			response := validateBoshDeployment()
 			Expect(response.AdmissionResponse.Allowed).To(BeFalse())
-			Expect(response.AdmissionResponse.Result.Message).To(ContainSubstring("no canary_watch_time specified"))
+			Expect(response.AdmissionResponse.Result.Message).To(ContainSubstring("no update block specified"))
 		})
 	})
 	Context("with an invalid canary_watch_time", func() {
