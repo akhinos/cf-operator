@@ -67,6 +67,7 @@ var validatingHookFuncs = []func(*zap.SugaredLogger, *config.Config) *wh.Operato
 
 var mutatingHookFuncs = []func(*zap.SugaredLogger, *config.Config) *wh.OperatorWebhook{
 	quarksstatefulset.NewQuarksStatefulSetPodMutator,
+	statefulset.NewStatefulSetRolloutMutator,
 }
 
 // AddToManager adds all Controllers to the Manager
