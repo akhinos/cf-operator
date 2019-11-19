@@ -125,12 +125,7 @@ func (kc *KubeConverter) serviceToQuarksStatefulSet(
 	volumeClaims = append(volumeClaims, bpmVolumeClaims...)
 
 	statefulSetLabels := statefulset.FilterLabels(instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Labels)
-
-	statefulSetAnnotations := instanceGroup.Env.AgentEnvBoshConfig.Agent.Settings.Annotations
-	if statefulSetAnnotations == nil {
-		statefulSetAnnotations = make(map[string]string)
-	}
-	statefulSetAnnotations["quarks.cloudfoundry.org/canary-watch-time"] = instanceGroup.Update.CanaryWatchTime
+	statefulSetAnnotations := statefulset.ComputeAnnotations(instanceGroup)
 
 	extSts := qstsv1a1.QuarksStatefulSet{
 		ObjectMeta: metav1.ObjectMeta{

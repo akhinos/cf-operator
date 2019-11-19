@@ -20,6 +20,7 @@ instance_groups:
   stemcell: default
   persistent_disk_type: medium
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   networks:
   - name: default
@@ -45,6 +46,7 @@ instance_groups:
   vm_type: small-highmem
   update:
     canary_watch_time: 20000-1200000
+    update_watch_time: "120000000"
   vm_extensions:
   - 100GB_ephemeral_disk
   stemcell: default
@@ -228,6 +230,7 @@ const NatsSmall = `---
 name: test
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: "120000000"
 releases:
 - name: nats
   version: "26"
@@ -261,6 +264,7 @@ const NatsSmallWithPatch = `---
 name: test
 update:
   canary_watch_time: 20000
+  update_watch_time: "120000000"
 releases:
 - name: nats
   version: "26"
@@ -306,6 +310,7 @@ const Drains = `---
 name: my-manifest
 update:
   canary_watch_time: 20000
+  update_watch_time: "120000000"
 releases:
 - name: cf-operator-testing
   version: "0.0.6"
@@ -331,6 +336,7 @@ stemcells:
   version: 28.g837c5b3-30.263-7.0.0_234.gcd7d1132
 update:
   canary_watch_time: 20000
+  update_watch_time: "120000000"
 instance_groups:
 - name: redis-slave
   instances: 2
@@ -658,6 +664,7 @@ const WithZeroInstances = `---
 name: nats-manifest
 update:
   serial: false
+  update_watch_time: 2
 releases:
 - name: nats
   version: "26"
@@ -706,6 +713,7 @@ instance_groups:
   lifecycle: errand
   update:
     canary_watch_time: 20000-1200000
+    update_watch_time: "120000000"
   jobs:
   - name: fake-errand-a
     release: fake-release
@@ -718,6 +726,7 @@ instance_groups:
 - name: fake-ig-2
   update:
     canary_watch_time: 20000-1200000
+    update_watch_time: "120000000"
   instances: 3
   jobs:
   - name: fake-job-a
@@ -728,6 +737,7 @@ instance_groups:
     release: fake-release
 - name: fake-ig-3
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 1
   jobs:
@@ -756,6 +766,7 @@ releases:
 instance_groups:
 - name: bpm
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 1
   jobs:
@@ -790,6 +801,7 @@ update:
 instance_groups:
 - name: route_registrar
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 2
   jobs:
@@ -831,6 +843,7 @@ const Diego = `
       os: opensuse-42.3
       version: 36.g03b4653-30.80-7.0.0_332.g0d8469bb
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instance_groups:
   - name: file_server
@@ -858,6 +871,7 @@ releases:
     version: 36.g03b4653-30.80-7.0.0_316.gcf9fe4a7
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: 20000-1200000
 instance_groups:
 - name: bpm
   instances: 1
@@ -880,6 +894,7 @@ const WithMultiBPMProcessesAndPersistentDisk = `---
 name: my-manifest
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: 20000-1200000
 releases:
 - name: fake-release
   version: "26"
@@ -945,10 +960,12 @@ releases:
 
 update:
   canary_watch_time: 10000-1100000
+  update_watch_time: 20000-1200000
 
 instance_groups:
 - name: bpm1
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 2
   jobs:
@@ -981,6 +998,7 @@ instance_groups:
   persistent_disk_type: ((operator_test_storage_class))
 - name: bpm2
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 2
   jobs:
@@ -1015,6 +1033,7 @@ instance_groups:
   persistent_disk_type: ((operator_test_storage_class))
 - name: bpm3
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 2
   jobs:
@@ -1070,6 +1089,7 @@ releases:
 instance_groups:
 - name: nats
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 2
   jobs:
@@ -1090,6 +1110,7 @@ instance_groups:
           internal: 4223
 - name: route_registrar
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   instances: 2
   jobs:
@@ -1119,6 +1140,7 @@ instance_groups:
           port: 8443
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: 20000-1200000
 `
 
 // ManifestWithLargeValues has large yaml values.
@@ -1126,11 +1148,13 @@ const ManifestWithLargeValues = `
 director_uuid: ""
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: 20000-1200000
 instance_groups:
 - azs:
   - z1
   - z2
   update:
+    update_watch_time: "120000000"
     canary_watch_time: 20000-1200000
   env:
     bosh:
@@ -2705,6 +2729,7 @@ releases:
 update:
   serial: false
   canary_watch_time: 20000-1200000
+  update_watch_time: 20000-1200000
 instance_groups:
 - name: bpm1
   jobs:
@@ -2734,6 +2759,7 @@ instance_groups:
 - name: bpm3
   update:
     canary_watch_time: 10000-9900000
+    update_watch_time: 10000-9900000
   jobs:
   - name: test-server3
     release: bpm
@@ -2762,6 +2788,7 @@ releases:
 update:
   serial: false
   canary_watch_time: 20000-1200000
+  update_watch_time: 10000-9900000
 instance_groups:
 - name: bpm1
   update:
@@ -2836,6 +2863,7 @@ releases:
     version: 36.g03b4653-30.80-7.0.0_316.gcf9fe4a7
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: 10000-9900000
   serial: false
 instance_groups:
 - name: bpm1
@@ -2877,6 +2905,7 @@ releases:
 update:
   canary_watch_time: 20000-1200000
   serial: true
+  update_watch_time: 10000-9900000
 instance_groups:
 - name: bpm1
   jobs:

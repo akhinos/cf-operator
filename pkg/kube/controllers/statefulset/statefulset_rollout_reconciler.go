@@ -26,7 +26,9 @@ const (
 
 var (
 	// annotationCanaryRollout is the state of the canary rollout of the stateful set
-	annotationCanaryRollout = fmt.Sprintf("%s/canary-rollout", apis.GroupName)
+	annotationCanaryRollout   = fmt.Sprintf("%s/canary-rollout", apis.GroupName)
+	annotationCanaryWatchTime = fmt.Sprintf("%s/canary-watch-time", apis.GroupName)
+	annotationUpdateWatchTime = fmt.Sprintf("%s/update-watch-time", apis.GroupName)
 )
 
 // NewStatefulSetRolloutReconciler returns a new reconcile.Reconciler

@@ -559,6 +559,9 @@ func (m *Manifest) propagateGlobalUpdateBlockToIGs() {
 			if ig.Update.CanaryWatchTime == "" {
 				ig.Update.CanaryWatchTime = m.Update.CanaryWatchTime
 			}
+			if ig.Update.UpdateWatchTime == "" {
+				ig.Update.UpdateWatchTime = m.Update.UpdateWatchTime
+			}
 			if ig.Update.Serial == nil {
 				ig.Update.Serial = m.Update.Serial
 			}
