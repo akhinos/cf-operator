@@ -259,6 +259,13 @@ func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qst
 	if labels == nil {
 		labels = make(map[string]string)
 	}
+	matchLabels := make(map[string]string, len(labels))
+	for key, val := range labels {
+		matchLabels[key] = val
+	}
+	if len(matchLabels) == 0 {
+		return nil, fmt.Errorf("LabelSelector must not be empty")
+	}
 	labels[manifest.LabelDeploymentVersion] = strconv.Itoa(version)
 	statefulSet.SetLabels(labels)
 
@@ -316,7 +323,7 @@ func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qst
 	statefulSet.SetName(statefulSetNamePrefix)
 	statefulSet.SetLabels(labels)
 	statefulSet.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: labels,
+		MatchLabels: matchLabels,
 	}
 	statefulSet.SetAnnotations(annotations)
 	statefulSet.Spec.Template.SetAnnotations(annotations)

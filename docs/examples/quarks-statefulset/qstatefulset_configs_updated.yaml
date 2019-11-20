@@ -24,11 +24,12 @@ spec:
   template:
     annotations:
       "quarks.cloudfoundry.org/canary-rollout": "Pending"
+      "quarks.cloudfoundry.org/update-watch-time": "120000"
+      "quarks.cloudfoundry.org/canary-watch-time": "120000"
+    labels:
+      app: example-statefulset
     spec:
       replicas: 2
-      selector:
-        matchLabels:
-          app: example-statefulset
       template:
         metadata:
           labels:
