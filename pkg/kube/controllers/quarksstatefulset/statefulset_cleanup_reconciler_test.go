@@ -2,7 +2,6 @@ package quarksstatefulset_test
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -80,7 +79,7 @@ var _ = Describe("ReconcileStatefulSetCleanup", func() {
 		}
 		statefulSetV1 = &v1beta2.StatefulSet{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "foo-v1",
+				Name:      "foo",
 				Namespace: "default",
 				UID:       "",
 				OwnerReferences: []metav1.OwnerReference{
@@ -219,11 +218,11 @@ var _ = Describe("ReconcileStatefulSetCleanup", func() {
 		BeforeEach(func() {
 			podV1 = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo-v1-0",
+					Name:      "foo-0",
 					Namespace: "default",
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							Name:               "foo-v1",
+							Name:               "foo",
 							UID:                "",
 							Controller:         pointers.Bool(true),
 							BlockOwnerDeletion: pointers.Bool(true),
@@ -331,7 +330,7 @@ var _ = Describe("ReconcileStatefulSetCleanup", func() {
 			client.DeleteCalls(func(context context.Context, object runtime.Object, opts ...crc.DeleteOption) error {
 				switch object := object.(type) {
 				case *v1beta2.StatefulSet:
-					Expect(object.GetName()).To(Equal(fmt.Sprintf("%s-v%d", "foo", 1)))
+					Expect(object.GetName()).To(Equal("foo"))
 					return nil
 				}
 				return nil

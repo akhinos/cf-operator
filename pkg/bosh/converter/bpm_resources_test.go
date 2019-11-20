@@ -268,7 +268,7 @@ var _ = Describe("kube converter", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				extStS := resources.InstanceGroups[0]
-				Expect(extStS.Spec.Template.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-watch-time", "20000-1200000"))
+				Expect(extStS.Spec.Template.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-watch-time", "1200000"))
 			})
 			It("combines the canaryWatchTime and custom annotations and adds them to ExtendedStatefulSet", func() {
 				m.InstanceGroups[1].Env.AgentEnvBoshConfig.Agent.Settings.Annotations = make(map[string]string)
@@ -277,7 +277,7 @@ var _ = Describe("kube converter", func() {
 				Expect(err).ShouldNot(HaveOccurred())
 
 				extStS := resources.InstanceGroups[0]
-				Expect(extStS.Spec.Template.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-watch-time", "20000-1200000"))
+				Expect(extStS.Spec.Template.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-watch-time", "1200000"))
 				Expect(extStS.Spec.Template.Annotations).To(HaveKeyWithValue("custom-annotation", "bar"))
 			})
 

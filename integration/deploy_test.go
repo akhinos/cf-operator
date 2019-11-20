@@ -20,7 +20,7 @@ import (
 
 var _ = Describe("Deploy", func() {
 	Context("when using the default configuration", func() {
-		stsName := "test-nats-v1"
+		stsName := "test-nats"
 		headlessSvcName := "test-nats"
 		clusterIpSvcName := "test-nats-0"
 
@@ -88,7 +88,7 @@ var _ = Describe("Deploy", func() {
 	})
 
 	Context("when using pre-render scripts", func() {
-		podName := "test-nats-v1-0"
+		podName := "test-nats-0"
 
 		It("it should run them", func() {
 			tearDown, err := env.CreateConfigMap(env.Namespace, corev1.ConfigMap{
@@ -314,7 +314,7 @@ var _ = Describe("Deploy", func() {
 					err = env.WaitForInstanceGroup(env.Namespace, "test", "nats", "2", 2)
 					Expect(err).NotTo(HaveOccurred(), "error waiting for instance group pods from deployment")
 
-					found, err := env.StatefulSetExist(env.Namespace, "test-nats-v1")
+					found, err := env.StatefulSetExist(env.Namespace, "test-nats")
 					Expect(found).To(BeFalse())
 					Expect(err).NotTo(HaveOccurred())
 
