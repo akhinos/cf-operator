@@ -798,6 +798,7 @@ releases:
     version: 36.g03b4653-30.80-7.0.0_332.g0d8469bb
 update:
   canary_watch_time: 20000-1200000
+  update_watch_time: 20000-1200000
 instance_groups:
 - name: route_registrar
   update:
