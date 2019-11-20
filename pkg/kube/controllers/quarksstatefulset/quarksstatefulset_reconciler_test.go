@@ -424,6 +424,11 @@ var _ = Describe("ReconcileQuarksStatefulSet", func() {
 					},
 					Spec: qstsv1a1.QuarksStatefulSetSpec{
 						Template: v1beta2.StatefulSet{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"test": "2",
+								},
+							},
 							Spec: v1beta2.StatefulSetSpec{
 								Replicas: pointers.Int32(1),
 							},
