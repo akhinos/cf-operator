@@ -61,7 +61,7 @@ var _ = Describe("Examples Directory", func() {
 
 			By("Checking the updated value in the env")
 			err = wait.PollImmediate(time.Second*5, time.Second*120, func() (bool, error) {
-				err := kubectl.RunCommandWithCheckString(namespace, "example-extendedstatefulset-0", "env", "SPECIAL_KEY=value1Updated")
+				err := kubectl.RunCommandWithCheckString(namespace, "example-quarks-statefulset-0", "env", "SPECIAL_KEY=value1Updated")
 				if err != nil {
 					return false, nil
 				}
@@ -69,7 +69,7 @@ var _ = Describe("Examples Directory", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 
-			err = kubectl.RunCommandWithCheckString(namespace, "example-extendedstatefulset-1", "env", "SPECIAL_KEY=value1Updated")
+			err = kubectl.RunCommandWithCheckString(namespace, "example-quarks-statefulset-1", "env", "SPECIAL_KEY=value1Updated")
 			Expect(err).ToNot(HaveOccurred())
 		})
 
