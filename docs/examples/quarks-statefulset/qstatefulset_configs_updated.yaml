@@ -22,12 +22,13 @@ metadata:
 spec:
   updateOnConfigChange: true
   template:
-    annotations:
-      "quarks.cloudfoundry.org/canary-rollout": "Pending"
-      "quarks.cloudfoundry.org/update-watch-time": "120000"
-      "quarks.cloudfoundry.org/canary-watch-time": "120000"
-    labels:
-      app: example-statefulset
+    metadata:
+      annotations:
+        "quarks.cloudfoundry.org/canary-rollout": "Pending"
+        "quarks.cloudfoundry.org/update-watch-time": "120000"
+        "quarks.cloudfoundry.org/canary-watch-time": "120000"
+      labels:
+        app: example-statefulset
     spec:
       replicas: 2
       template:

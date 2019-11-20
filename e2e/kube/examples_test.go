@@ -78,8 +78,29 @@ var _ = Describe("Examples Directory", func() {
 			podWait("pod/example-quarks-statefulset-0")
 			podWait("pod/example-quarks-statefulset-1")
 
+			yamlUpdatedFilePathFailing := examplesDir + "quarks-statefulset/qstatefulset_configs_fail.yaml"
+			err := cmdHelper.Apply(namespace, yamlUpdatedFilePathFailing)
+			Expect(err).ToNot(HaveOccurred())
+
+			By("Waiting for failed pod")
+			err = wait.PollImmediate(time.Second*5, time.Second*120, func() (bool, error) {
+				podStatus, err := kubectl.PodStatus(namespace, "example-quarks-statefulset-1")
+				if err != nil {
+					return true, err
+				}
+				lastStateTerminated := podStatus.ContainerStatuses[0].LastTerminationState.Terminated
+				return lastStateTerminated != nil && lastStateTerminated.ExitCode == 1, nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			yamlUpdatedFilePath := examplesDir + "quarks-statefulset/qstatefulset_configs_updated.yaml"
+
+			By("Updating the config value used by pods")
+			err = cmdHelper.Apply(namespace, yamlUpdatedFilePath)
+			Expect(err).ToNot(HaveOccurred())
+
 			By("Checking the updated value in the env")
-			err := wait.PollImmediate(time.Second*5, time.Second*120, func() (bool, error) {
+			err = wait.PollImmediate(time.Second*5, time.Second*120, func() (bool, error) {
 				err := kubectl.RunCommandWithCheckString(namespace, "example-quarks-statefulset-0", "env", "SPECIAL_KEY=value1Updated")
 				if err != nil {
 					return false, nil
