@@ -246,6 +246,16 @@ Follow the instructions from https://github.com/kubernetes-sigs/kind/
     If using a locally built quarks-job image, it might be necessary to load it, too,
     see [development](development.md#standalone-components).
 
+## Running tests with K8s included in Docker Desktop
+
+* Enable kubernetes in Docker Desktop
+
+* Run tests
+
+```bash
+CF_OPERATOR_WEBHOOK_SERVICE_HOST=host.docker.internal  make test-integration
+```
+
 ## Makefile
 
 The following are the make targets available and their actions.
