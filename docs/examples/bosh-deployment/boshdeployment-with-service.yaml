@@ -21,9 +21,6 @@ data:
   manifest: |
     ---
     name: nats-manifest
-    update:
-      canary_watch_time: "120000000"
-      update_watch_time: "120000000"
     releases:
     - name: nats
       version: "26"

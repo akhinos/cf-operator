@@ -186,6 +186,15 @@ old resources will interfere with a future installation, by:
 kubectl get mutatingwebhookconfiguration -oname | xargs -n 1 kubectl delete
 ```
 
+## Running tests with K8s included in Docker Desktop
+
+* Enable kubernetes in Docker Desktop
+
+* Run tests
+
+```bash
+CF_OPERATOR_WEBHOOK_SERVICE_HOST=host.docker.internal  make test-integration
+```
 ## Makefile
 
 The following are the make targets available and their actions.

@@ -273,6 +273,9 @@ func (c *Catalog) DefaultStatefulSet(name string) v1beta2.StatefulSet {
 	return v1beta2.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			Labels: map[string]string{
+				"testpod": "yes",
+			},
 		},
 		Spec: v1beta2.StatefulSetSpec{
 			Replicas: pointers.Int32(1),

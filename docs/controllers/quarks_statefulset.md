@@ -174,10 +174,10 @@ affinity:
 
 If zones are set for an `QuarksStatefulSet`, the following occurs:
 
-- The name of each created `StatefulSet` is generated as `<quarks statefulset name>-z<index of az>-v<statefulset version>`.
+- The name of each created `StatefulSet` is generated as `<quarks statefulset name>-z<index of az>`.
 
   ```text
-  myquarksstatefulset-z0-v1
+  myquarksstatefulset-z0
   ```
 
 - The `StatefulSet` and its `Pods` are labeled with the following:

@@ -24,7 +24,7 @@ var _ = Describe("Deploy", func() {
 		headlessSvcName := "test-nats"
 		clusterIpSvcName := "test-nats-0"
 
-		It("should deploy a pod and create services", func() {
+		FIt("should deploy a pod and create services", func() {
 			tearDown, err := env.CreateConfigMap(env.Namespace, env.DefaultBOSHManifestConfigMap("manifest"))
 			Expect(err).NotTo(HaveOccurred())
 			defer func(tdf machine.TearDownFunc) { Expect(tdf()).To(Succeed()) }(tearDown)
@@ -411,12 +411,12 @@ var _ = Describe("Deploy", func() {
 			Expect(err).NotTo(HaveOccurred(), "error waiting for instance group pods from deployment")
 
 			By("Checking volume mounts with secret versions")
-			pod, err := env.GetPod(env.Namespace, manifestName+"-nats-v2-1")
+			pod, err := env.GetPod(env.Namespace, manifestName+"-nats-1")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pod.Spec.Volumes[4].Secret.SecretName).To(Equal(manifestName + ".ig-resolved.nats-v2"))
 			Expect(pod.Spec.InitContainers[2].VolumeMounts[2].Name).To(Equal("ig-resolved"))
 
-			pod, err = env.GetPod(env.Namespace, manifestName+"-route-registrar-v2-0")
+			pod, err = env.GetPod(env.Namespace, manifestName+"-route-registrar-0")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(pod.Spec.Volumes[4].Secret.SecretName).To(Equal(manifestName + ".ig-resolved.route-registrar-v2"))
 			Expect(pod.Spec.InitContainers[2].VolumeMounts[2].Name).To(Equal("ig-resolved"))

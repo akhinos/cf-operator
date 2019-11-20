@@ -100,7 +100,7 @@ var _ = Describe("ReconcileStatefulSetCleanup", func() {
 		}
 		statefulSetV2 = &v1beta2.StatefulSet{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "foo-v2",
+				Name:      "foo",
 				Namespace: "default",
 				UID:       "",
 				OwnerReferences: []metav1.OwnerReference{
@@ -123,7 +123,7 @@ var _ = Describe("ReconcileStatefulSetCleanup", func() {
 		client = &cfakes.FakeClient{}
 		manager.GetClientReturns(client)
 
-		request = reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo.bpm.fakepod-v1", Namespace: "default"}}
+		request = reconcile.Request{NamespacedName: types.NamespacedName{Name: "foo.bpm.fakepod", Namespace: "default"}}
 	})
 
 	JustBeforeEach(func() {
@@ -235,11 +235,11 @@ var _ = Describe("ReconcileStatefulSetCleanup", func() {
 			}
 			podV2 = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo-v2-0",
+					Name:      "foo-0",
 					Namespace: "default",
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							Name:               "foo-v2",
+							Name:               "foo",
 							UID:                "",
 							Controller:         pointers.Bool(true),
 							BlockOwnerDeletion: pointers.Bool(true),

@@ -112,7 +112,7 @@ var _ = Describe("QuarksStatefulSet", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Checking that old statefulset is not deleted")
-			_, err = env.GetStatefulSet(env.Namespace, qSts.GetName()+"-v1")
+			_, err = env.GetStatefulSet(env.Namespace, qSts.GetName())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -172,7 +172,7 @@ var _ = Describe("QuarksStatefulSet", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Two update events for one configMap and one secret
-			err = env.WaitForPod(env.Namespace, qSts.GetName()+"-v3-0")
+			err = env.WaitForPod(env.Namespace, qSts.GetName()+"-0")
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
