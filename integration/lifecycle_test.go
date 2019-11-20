@@ -95,7 +95,7 @@ var _ = Describe("Lifecycle", func() {
 			By("checking for instance group pods")
 			err = env.WaitForInstanceGroup(env.Namespace, "test", "drains", "1", 1)
 			Expect(err).NotTo(HaveOccurred(), "error waiting for instance group pods from deployment")
-			err = env.WaitForPodReady(env.Namespace, "test-drains-v1-0")
+			err = env.WaitForPodReady(env.Namespace, "test-drains-0")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-drains-v1-0", "delaying-drain-job-drain-watch", "ls: cannot access '/tmp/drain_logs': No such file or directory")).To(BeNil(), "error getting logs from drain_watch process")
@@ -106,12 +106,12 @@ var _ = Describe("Lifecycle", func() {
 			postAssertionWg.Add(2)
 			go func() {
 				preAssertionWg.Done()
-				Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-drains-v1-0", "delaying-drain-job-drain-watch", "delaying-drain-job.log")).To(BeNil(), "error finding file created by drain script")
+				Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-drains-0", "delaying-drain-job-drain-watch", "delaying-drain-job.log")).To(BeNil(), "error finding file created by drain script")
 				postAssertionWg.Done()
 			}()
 			go func() {
 				preAssertionWg.Done()
-				Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-drains-v1-0", "failing-drain-job-drain-watch", "failing-drain-job.log")).To(BeNil(), "error finding file created by drain script")
+				Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-drains-0", "failing-drain-job-drain-watch", "failing-drain-job.log")).To(BeNil(), "error finding file created by drain script")
 				postAssertionWg.Done()
 			}()
 			preAssertionWg.Wait()
