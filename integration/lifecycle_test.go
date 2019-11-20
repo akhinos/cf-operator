@@ -77,8 +77,8 @@ var _ = Describe("Lifecycle", func() {
 			Expect(err).NotTo(HaveOccurred(), "error getting service for instance group")
 
 			// Check link address
-			Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-nats-v1-0", "nats-nats", fmt.Sprintf("Trying to connect to route on %s:4223", clusterIPService.Name))).To(BeNil(), "error getting logs for connecting nats route")
-			Expect(env.WaitForPodContainerLogMatchRegexp(env.Namespace, "test-nats-v1-0", "nats-nats", fmt.Sprintf(`%s:4223 - [\w:]+ - Route connection created`, clusterIPService.Spec.ClusterIP))).To(BeNil(), "error getting logs for resolving nats route address")
+			Expect(env.WaitForPodContainerLogMsg(env.Namespace, "test-nats-0", "nats-nats", fmt.Sprintf("Trying to connect to route on %s:4223", clusterIPService.Name))).To(BeNil(), "error getting logs for connecting nats route")
+			Expect(env.WaitForPodContainerLogMatchRegexp(env.Namespace, "test-nats-0", "nats-nats", fmt.Sprintf(`%s:4223 - [\w:]+ - Route connection created`, clusterIPService.Spec.ClusterIP))).To(BeNil(), "error getting logs for resolving nats route address")
 		})
 
 		It("executes the job's drain scripts", func() {

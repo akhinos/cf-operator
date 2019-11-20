@@ -6,6 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"code.cloudfoundry.org/quarks-utils/pkg/pointers"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"code.cloudfoundry.org/cf-operator/pkg/kube/apis"
 
 	"code.cloudfoundry.org/quarks-utils/pkg/config"
@@ -73,16 +78,6 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 	var newStatus = status
 	dirty := false
 
-	defer func() {
-		if newStatus != statefulSet.Annotations[annotationCanaryRollout] {
-			statefulSet.Annotations[annotationCanaryRollout] = newStatus
-			dirty = true
-		}
-		if dirty {
-			r.update(ctx, &statefulSet)
-		}
-	}()
-
 	switch status {
 	case rolloutStateCanaryUpscale:
 		if hasTimedOutOrIsInvalid(ctx, statefulSet, annotationUpdateWatchTime) {
@@ -146,21 +141,32 @@ func (r *ReconcileStatefulSetRollout) Reconcile(request reconcile.Request) (reco
 			}
 		}
 	}
+	if newStatus != statefulSet.Annotations[annotationCanaryRollout] {
+		statefulSet.Annotations[annotationCanaryRollout] = newStatus
+		dirty = true
+	}
+	if dirty {
+		r.update(ctx, &statefulSet, &result)
+	}
 	return result, nil
 }
 
 func hasTimedOutOrIsInvalid(ctx context.Context, statefulSet v1beta2.StatefulSet, watchTimeAnnotation string) bool {
+	watchTimeStr, ok := statefulSet.Annotations[watchTimeAnnotation]
+	if !ok || watchTimeStr == "" {
+		return false //never timeout in case of missing watch time
+	}
+	watchTime, err := strconv.Atoi(watchTimeStr)
+	if err != nil {
+		ctxlog.Errorf(ctx, "Invalid annotation %s: %s", watchTimeAnnotation, statefulSet.Annotations[watchTimeAnnotation])
+		return true
+	}
 	updateStartTimeUnix, err := strconv.ParseInt(statefulSet.Annotations[annotationUpdateStartTime], 10, 64)
 	if err != nil {
 		ctxlog.Errorf(ctx, "Invalid annotation %s: %s", annotationUpdateStartTime, statefulSet.Annotations[annotationUpdateStartTime])
 		return true
 	}
 	updateStartTime := time.Unix(updateStartTimeUnix, 0)
-	watchTime, err := strconv.Atoi(statefulSet.Annotations[watchTimeAnnotation])
-	if err != nil {
-		ctxlog.Errorf(ctx, "Invalid annotation %s: %s", watchTimeAnnotation, statefulSet.Annotations[watchTimeAnnotation])
-		return true
-	}
 	if time.Now().After(updateStartTime.Add(time.Duration(watchTime) * time.Millisecond)) {
 		return true
 	}
@@ -185,10 +191,25 @@ func (r *ReconcileStatefulSetRollout) getState(sts *v1beta2.StatefulSet) string 
 	return rolloutStateRollout
 }
 
-func (r *ReconcileStatefulSetRollout) update(ctx context.Context, statefulSet *v1beta2.StatefulSet) error {
+func (r *ReconcileStatefulSetRollout) update(ctx context.Context, statefulSet *v1beta2.StatefulSet, result *reconcile.Result) error {
 
-	err := r.client.Update(ctx, statefulSet)
+	partition := *statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition
+	state := statefulSet.Annotations[annotationCanaryRollout]
+	_, err := controllerutil.CreateOrUpdate(ctx, r.client, statefulSet, func() error {
+		statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition = pointers.Int32(partition)
+		statefulSet.Annotations[annotationCanaryRollout] = state
+		return nil
+	})
 	if err != nil {
+		if err != nil {
+			statusError, ok := err.(*errors.StatusError)
+			if ok && statusError.Status().Code == 409 {
+				result.RequeueAfter = 1 // Requeue immediately
+				return nil
+			}
+			ctxlog.Errorf(ctx, "Error while updating stateful set: ", err.Error())
+			return err
+		}
 		ctxlog.Errorf(ctx, "Error while updating stateful set: ", err.Error())
 		return err
 	}

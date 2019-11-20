@@ -46,24 +46,36 @@ func ComputeAnnotations(ig *manifest.InstanceGroup) (map[string]string, error) {
 	if statefulSetAnnotations == nil {
 		statefulSetAnnotations = make(map[string]string)
 	}
+	if ig.Update == nil {
+		return statefulSetAnnotations, nil
+	}
 
 	canaryWatchTime, err := ExtractWatchTime(ig.Update.CanaryWatchTime, "canary_watch_time")
 	if err != nil {
 		return nil, err
 	}
-	statefulSetAnnotations[annotationCanaryWatchTime] = canaryWatchTime
+	if canaryWatchTime != "" {
+		statefulSetAnnotations[annotationCanaryWatchTime] = canaryWatchTime
+	}
 
 	updateWatchTime, err := ExtractWatchTime(ig.Update.UpdateWatchTime, "update_watch_time")
 	if err != nil {
 		return nil, err
 	}
-	statefulSetAnnotations[annotationUpdateWatchTime] = updateWatchTime
+
+	if updateWatchTime != "" {
+		statefulSetAnnotations[annotationUpdateWatchTime] = updateWatchTime
+	}
 
 	return statefulSetAnnotations, nil
 }
 
 //ExtractWatchTime computes the watch time from a range or an absolute value
 func ExtractWatchTime(rawWatchTime string, field string) (string, error) {
+	if rawWatchTime == "" {
+		return "", nil
+	}
+
 	rangeRegex := regexp.MustCompile(`^\s*(\d+)\s*-\s*(\d+)\s*$`)
 	if matches := rangeRegex.FindStringSubmatch(rawWatchTime); len(matches) > 0 {
 		// Ignore the lower boundary, because the API-Server triggers reconciles
