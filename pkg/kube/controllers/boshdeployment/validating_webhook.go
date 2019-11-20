@@ -211,7 +211,7 @@ func (v *Validator) Handle(_ context.Context, req admission.Request) admission.R
 			AdmissionResponse: v1beta1.AdmissionResponse{
 				Allowed: false,
 				Result: &metav1.Status{
-					Message: fmt.Sprintf("Failed to validate canary_watch_time: %s", err.Error()),
+					Message: fmt.Sprintf("Failed to validate update block: %s", err.Error()),
 				},
 			},
 		}

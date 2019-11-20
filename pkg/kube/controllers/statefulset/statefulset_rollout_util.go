@@ -62,6 +62,7 @@ func ComputeAnnotations(ig *manifest.InstanceGroup) (map[string]string, error) {
 	return statefulSetAnnotations, nil
 }
 
+//ExtractWatchTime computes the watch time from a range or an absolute value
 func ExtractWatchTime(rawWatchTime string, field string) (string, error) {
 	rangeRegex := regexp.MustCompile(`^\s*(\d+)\s*-\s*(\d+)\s*$`)
 	if matches := rangeRegex.FindStringSubmatch(rawWatchTime); len(matches) > 0 {
