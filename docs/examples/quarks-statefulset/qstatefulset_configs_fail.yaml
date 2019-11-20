@@ -16,9 +16,9 @@ metadata:
   name: example1
 ---
 apiVersion: quarks.cloudfoundry.org/v1alpha1
-kind: ExtendedStatefulSet
+kind: QuarksStatefulSet
 metadata:
-  name: example-extendedstatefulset
+  name: example-quarksstatefulset
 spec:
   updateOnConfigChange: true
   template:
