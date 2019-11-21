@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = FDescribe("When the muatating webhook handles a statefulset", func() {
+var _ = Describe("When the muatating webhook handles a statefulset", func() {
 	var (
 		log     *zap.SugaredLogger
 		ctx     context.Context
@@ -38,6 +38,25 @@ var _ = FDescribe("When the muatating webhook handles a statefulset", func() {
 	BeforeEach(func() {
 		_, log = helper.NewTestLogger()
 		ctx = ctxlog.NewParentContext(log)
+		old = v1beta2.StatefulSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-statefulset",
+				Namespace: "test",
+				Annotations: map[string]string{
+					AnnotationCanaryRolloutEnabled: "true",
+				},
+			},
+			Spec: v1beta2.StatefulSetSpec{
+				Replicas: pointers.Int32(2),
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{{
+							Name: "test-container",
+						}},
+					},
+				},
+			},
+		}
 	})
 
 	JustBeforeEach(func() {
@@ -51,25 +70,6 @@ var _ = FDescribe("When the muatating webhook handles a statefulset", func() {
 
 	Context("with no change in pod template", func() {
 		BeforeEach(func() {
-			old = v1beta2.StatefulSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-statefulset",
-					Namespace: "test",
-					Annotations: map[string]string{
-						AnnotationCanaryRolloutEnabled: "true",
-					},
-				},
-				Spec: v1beta2.StatefulSetSpec{
-					Replicas: pointers.Int32(2),
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "test-container",
-							}},
-						},
-					},
-				},
-			}
 			new = old
 		})
 		It("no rollout is triggered", func() {
@@ -90,25 +90,6 @@ var _ = FDescribe("When the muatating webhook handles a statefulset", func() {
 
 	Context("when pod template changes", func() {
 		BeforeEach(func() {
-			old = v1beta2.StatefulSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-statefulset",
-					Namespace: "test",
-					Annotations: map[string]string{
-						AnnotationCanaryRolloutEnabled: "true",
-					},
-				},
-				Spec: v1beta2.StatefulSetSpec{
-					Replicas: pointers.Int32(2),
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
-								Name: "test-container",
-							}},
-						},
-					},
-				},
-			}
 			old.DeepCopyInto(&new)
 			new.Spec.Template.Spec.Containers[0].Name = "changed-name"
 		})
