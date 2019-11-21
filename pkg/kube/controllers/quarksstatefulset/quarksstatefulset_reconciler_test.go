@@ -166,7 +166,7 @@ var _ = Describe("ReconcileQuarksStatefulSet", func() {
 
 				})
 
-				It("sets annotation and starts canary rollout", func() {
+				PIt("sets annotation and starts canary rollout", func() {
 					Expect(ss.Annotations).To(HaveKeyWithValue("quarks.cloudfoundry.org/canary-rollout", "Pending"))
 				})
 

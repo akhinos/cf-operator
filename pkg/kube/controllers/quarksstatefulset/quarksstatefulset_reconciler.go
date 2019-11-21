@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
+
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/pkg/errors"
@@ -21,9 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"code.cloudfoundry.org/cf-operator/pkg/bosh/manifest"
 	qstsv1a1 "code.cloudfoundry.org/cf-operator/pkg/kube/apis/quarksstatefulset/v1alpha1"
-	"code.cloudfoundry.org/cf-operator/pkg/kube/controllers/statefulset"
 	"code.cloudfoundry.org/quarks-utils/pkg/config"
 	"code.cloudfoundry.org/quarks-utils/pkg/ctxlog"
 	"code.cloudfoundry.org/quarks-utils/pkg/meltdown"
@@ -253,37 +253,9 @@ func (r *ReconcileQuarksStatefulSet) createStatefulSet(ctx context.Context, qSta
 func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qstsv1a1.QuarksStatefulSet, template *v1beta2.StatefulSet, zoneIndex int, zoneName string, version int) (*v1beta2.StatefulSet, error) {
 	statefulSet := template.DeepCopy()
 
-	// Get the labels and annotations
-	labels := statefulSet.GetLabels()
-	if labels == nil {
-		labels = make(map[string]string)
-	}
-	matchLabels := make(map[string]string, len(labels))
-	for key, val := range labels {
-		matchLabels[key] = val
-	}
-	if len(matchLabels) == 0 {
-		return nil, fmt.Errorf("LabelSelector must not be empty")
-	}
-	labels[manifest.LabelDeploymentVersion] = strconv.Itoa(version)
-	statefulSet.SetLabels(labels)
-
-	annotations := statefulSet.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-
 	statefulSetNamePrefix := qStatefulSet.GetName()
-
-	// Get the pod labels and annotations
-	podLabels := statefulSet.Spec.Template.GetLabels()
-	if podLabels == nil {
-		podLabels = make(map[string]string)
-	}
-	podAnnotations := statefulSet.Spec.Template.GetAnnotations()
-	if podAnnotations == nil {
-		podAnnotations = make(map[string]string)
-	}
+	labels := make(map[string]string)
+	annotations := make(map[string]string)
 
 	// Update available-zone specified properties
 	if zoneName != "" {
@@ -299,36 +271,37 @@ func (r *ReconcileQuarksStatefulSet) generateSingleStatefulSet(qStatefulSet *qst
 		}
 		annotations[qstsv1a1.AnnotationZones] = string(zonesBytes)
 
-		podLabels[qstsv1a1.LabelAZIndex] = strconv.Itoa(zoneIndex)
-		podLabels[qstsv1a1.LabelAZName] = zoneName
-
-		podAnnotations[qstsv1a1.AnnotationZones] = string(zonesBytes)
-
 		statefulSet = r.updateAffinity(statefulSet, qStatefulSet.Spec.ZoneNodeLabel, zoneName)
 	}
 
-	podLabels[qstsv1a1.LabelAZIndex] = strconv.Itoa(zoneIndex)
-	podLabels[qstsv1a1.LabelQStsName] = qStatefulSet.GetName()
-	podLabels[manifest.LabelDeploymentVersion] = fmt.Sprintf("%d", version)
+	labels[qstsv1a1.LabelQStsName] = qStatefulSet.GetName()
 
-	statefulSet.Spec.Template.SetLabels(podLabels)
-	statefulSet.Spec.Template.SetAnnotations(podAnnotations)
-
-	r.injectContainerEnv(&statefulSet.Spec.Template.Spec, zoneIndex, zoneName, qStatefulSet.Spec.Template.Spec.Replicas)
-
-	annotations[qstsv1a1.AnnotationVersion] = fmt.Sprintf("%d", version)
+	annotations[qstsv1a1.AnnotationVersion] = strconv.Itoa(version)
 	annotations[statefulset.AnnotationCanaryRolloutEnabled] = "true"
 
 	// Set updated properties
+	statefulSet.Spec.Template.SetLabels(mergeMap(statefulSet.Spec.Template.GetLabels(), labels))
+	statefulSet.Spec.Template.SetAnnotations(mergeMap(statefulSet.Spec.Template.GetAnnotations(), annotations))
 	statefulSet.SetName(statefulSetNamePrefix)
-	statefulSet.SetLabels(labels)
+	statefulSet.SetLabels(mergeMap(statefulSet.GetLabels(), labels))
 	statefulSet.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: matchLabels,
+		MatchLabels: labels,
 	}
-	statefulSet.SetAnnotations(annotations)
-	statefulSet.Spec.Template.SetAnnotations(annotations)
+	statefulSet.SetAnnotations(mergeMap(statefulSet.GetAnnotations(), annotations))
 
+	r.injectContainerEnv(&statefulSet.Spec.Template.Spec, zoneIndex, zoneName, qStatefulSet.Spec.Template.Spec.Replicas)
 	return statefulSet, nil
+}
+
+func mergeMap(map1 map[string]string, map2 map[string]string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range map1 {
+		result[k] = v
+	}
+	for k, v := range map2 {
+		result[k] = v
+	}
+	return result
 }
 
 // updateAffinity Update current statefulSet Affinity from AZ specification

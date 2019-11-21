@@ -158,7 +158,7 @@ var _ = Describe("Controllers", func() {
 				Expect(client.CreateCallCount()).To(Equal(2)) // webhook config for Mutation and Validation
 			})
 
-			It("generates the webhook configuration", func() {
+			PIt("generates the webhook configuration", func() {
 				client.CreateCalls(func(context context.Context, object runtime.Object, _ ...crc.CreateOption) error {
 					// We should be getting 2 Create calls - one for the
 					// Validation webhook, one for the Mutating Webhook
