@@ -2,7 +2,6 @@ package boshdeployment
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -225,7 +224,7 @@ func (v *Validator) Handle(_ context.Context, req admission.Request) admission.R
 
 func validateUpdateBlock(manifest manifest.Manifest) error {
 	if manifest.Update == nil {
-		return errors.New("no update block specified")
+		return nil
 	}
 	if _, err := statefulset.ExtractWatchTime(manifest.Update.CanaryWatchTime, "canary_watch_time"); err != nil {
 		return err

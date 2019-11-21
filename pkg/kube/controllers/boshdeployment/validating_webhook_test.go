@@ -89,16 +89,6 @@ var _ = Describe("When the validating webhook handles a manifest", func() {
 			return response
 		}
 	})
-	Context("with no update block", func() {
-		BeforeEach(func() {
-			manifest.Update = nil
-		})
-		It("the manifest is rejected", func() {
-			response := validateBoshDeployment()
-			Expect(response.AdmissionResponse.Allowed).To(BeFalse())
-			Expect(response.AdmissionResponse.Result.Message).To(ContainSubstring("no update block specified"))
-		})
-	})
 	Context("with an invalid canary_watch_time", func() {
 		BeforeEach(func() {
 			manifest.Update.CanaryWatchTime = "notANumber"
