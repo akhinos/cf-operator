@@ -63,7 +63,10 @@ func (m *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	m.decoder.DecodeRaw(req.OldObject, oldStatefulset)
+	err = m.decoder.DecodeRaw(req.OldObject, oldStatefulset)
+	if err != nil {
+		return admission.Errored(http.StatusBadRequest, err)
+	}
 
 	m.log.Debug("Mutator handler ran for statefulset ", statefulset.Name)
 
